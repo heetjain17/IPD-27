@@ -1,0 +1,17 @@
+# Build outputs
+dist/
+build/
+.expo/
+
+# Dependencies
+node_modules/
+
+# Generated / auto-managed files
+expo-env.d.ts
+nativewind-env.d.ts
+
+# Assets
+assets/
+
+# Lock files
+package-lock.json

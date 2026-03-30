@@ -8,25 +8,20 @@ export default function HomeScreen() {
   const isDark = colorScheme === 'dark';
 
   return (
-    <SafeAreaView
-      className={`flex-1 ${isDark ? 'bg-surface-lowest' : 'bg-light-surface-lowest'}`}
-    >
-      <ScrollView
-        contentContainerClassName="px-6 pb-16"
-        showsVerticalScrollIndicator={false}
-      >
+    <SafeAreaView className={`flex-1 ${isDark ? 'bg-surface-lowest' : 'bg-light-surface-lowest'}`}>
+      <ScrollView contentContainerClassName="px-6 pb-16" showsVerticalScrollIndicator={false}>
         {/* ── Header ─────────────────────────────────────────────────────── */}
-        <View className="flex-row items-center justify-between pt-12 pb-8">
+        <View className="flex-row items-center justify-between pb-8 pt-12">
           <View>
             <Text
-              className={`text-label-sm font-body uppercase tracking-widest ${
+              className={`font-body text-label-sm uppercase tracking-widest ${
                 isDark ? 'text-on-surface-variant' : 'text-light-on-surface-variant'
               }`}
             >
               Design System
             </Text>
             <Text
-              className={`text-display-md font-display mt-1 ${
+              className={`mt-1 font-display text-display-md ${
                 isDark ? 'text-on-surface' : 'text-light-on-surface'
               }`}
             >
@@ -38,29 +33,29 @@ export default function HomeScreen() {
 
         {/* ── Primary Accent Swatch ───────────────────────────────────────── */}
         <View
-          className={`rounded-roundedness-lg p-6 mb-6 ${
+          className={`mb-6 rounded-roundedness-lg p-6 ${
             isDark ? 'bg-surface-container' : 'bg-light-surface-container'
           }`}
         >
           <Text
-            className={`text-label-sm font-body uppercase tracking-widest mb-3 ${
+            className={`mb-3 font-body text-label-sm uppercase tracking-widest ${
               isDark ? 'text-on-surface-variant' : 'text-light-on-surface-variant'
             }`}
           >
             Primary Accent
           </Text>
           <View className="flex-row items-center gap-4">
-            <View className="w-16 h-16 rounded-roundedness-md bg-primary" />
+            <View className="h-16 w-16 rounded-roundedness-md bg-primary" />
             <View>
               <Text
-                className={`text-title-md font-display ${
+                className={`font-display text-title-md ${
                   isDark ? 'text-on-surface' : 'text-light-on-surface'
                 }`}
               >
                 #D7FD4E
               </Text>
               <Text
-                className={`text-body-sm font-body ${
+                className={`font-body text-body-sm ${
                   isDark ? 'text-on-surface-variant' : 'text-light-on-surface-variant'
                 }`}
               >
@@ -72,67 +67,83 @@ export default function HomeScreen() {
 
         {/* ── Surface Hierarchy ───────────────────────────────────────────── */}
         <Text
-          className={`text-label-sm font-body uppercase tracking-widest mb-3 ${
+          className={`mb-3 font-body text-label-sm uppercase tracking-widest ${
             isDark ? 'text-on-surface-variant' : 'text-light-on-surface-variant'
           }`}
         >
           Surface Hierarchy
         </Text>
-        <View className="gap-3 mb-6">
+        <View className="mb-6 gap-3">
           {[
-            { label: 'surface-lowest',           darkCls: 'bg-surface-lowest',           lightCls: 'bg-light-surface-lowest' },
-            { label: 'surface',                  darkCls: 'bg-surface',                  lightCls: 'bg-light-surface' },
-            { label: 'surface-container-low',    darkCls: 'bg-surface-container-low',    lightCls: 'bg-light-surface-container-low' },
-            { label: 'surface-container',        darkCls: 'bg-surface-container',        lightCls: 'bg-light-surface-container' },
-            { label: 'surface-container-highest',darkCls: 'bg-surface-container-highest',lightCls: 'bg-light-surface-container-highest' },
+            {
+              label: 'surface-lowest',
+              darkCls: 'bg-surface-lowest',
+              lightCls: 'bg-light-surface-lowest',
+            },
+            { label: 'surface', darkCls: 'bg-surface', lightCls: 'bg-light-surface' },
+            {
+              label: 'surface-container-low',
+              darkCls: 'bg-surface-container-low',
+              lightCls: 'bg-light-surface-container-low',
+            },
+            {
+              label: 'surface-container',
+              darkCls: 'bg-surface-container',
+              lightCls: 'bg-light-surface-container',
+            },
+            {
+              label: 'surface-container-highest',
+              darkCls: 'bg-surface-container-highest',
+              lightCls: 'bg-light-surface-container-highest',
+            },
           ].map(({ label, darkCls, lightCls }) => (
             <View
               key={label}
-              className={`rounded-roundedness-md px-4 py-3 flex-row items-center justify-between border border-outline-variant/20 ${
+              className={`flex-row items-center justify-between rounded-roundedness-md border border-outline-variant/20 px-4 py-3 ${
                 isDark ? darkCls : lightCls
               }`}
             >
               <Text
-                className={`text-body-sm font-body ${
+                className={`font-body text-body-sm ${
                   isDark ? 'text-on-surface-variant' : 'text-light-on-surface-variant'
                 }`}
               >
                 {label}
               </Text>
-              <View className="w-4 h-4 rounded-full bg-primary opacity-80" />
+              <View className="h-4 w-4 rounded-full bg-primary opacity-80" />
             </View>
           ))}
         </View>
 
         {/* ── Typography Scale ────────────────────────────────────────────── */}
         <View
-          className={`rounded-roundedness-lg p-6 mb-6 ${
+          className={`mb-6 rounded-roundedness-lg p-6 ${
             isDark ? 'bg-surface-container' : 'bg-light-surface-container'
           }`}
         >
           <Text
-            className={`text-label-sm font-body uppercase tracking-widest mb-4 ${
+            className={`mb-4 font-body text-label-sm uppercase tracking-widest ${
               isDark ? 'text-on-surface-variant' : 'text-light-on-surface-variant'
             }`}
           >
             Typography
           </Text>
           <Text
-            className={`text-title-lg font-display mb-1 ${
+            className={`mb-1 font-display text-title-lg ${
               isDark ? 'text-on-surface' : 'text-light-on-surface'
             }`}
           >
             Manrope — Display
           </Text>
           <Text
-            className={`text-body-lg font-body mb-1 ${
+            className={`mb-1 font-body text-body-lg ${
               isDark ? 'text-on-surface' : 'text-light-on-surface'
             }`}
           >
             Inter — Body text at 1.6 line-height
           </Text>
           <Text
-            className={`text-label-sm font-body uppercase tracking-widest ${
+            className={`font-body text-label-sm uppercase tracking-widest ${
               isDark ? 'text-on-surface-variant' : 'text-light-on-surface-variant'
             }`}
           >
@@ -142,7 +153,7 @@ export default function HomeScreen() {
 
         {/* ── Button Primitives ───────────────────────────────────────────── */}
         <Text
-          className={`text-label-sm font-body uppercase tracking-widest mb-3 ${
+          className={`mb-3 font-body text-label-sm uppercase tracking-widest ${
             isDark ? 'text-on-surface-variant' : 'text-light-on-surface-variant'
           }`}
         >
@@ -150,19 +161,19 @@ export default function HomeScreen() {
         </Text>
         <View className="gap-3">
           {/* Primary */}
-          <View className="bg-primary rounded-roundedness-xl px-6 py-4 items-center">
-            <Text className="text-on-primary font-display font-semibold text-body-lg">
+          <View className="items-center rounded-roundedness-xl bg-primary px-6 py-4">
+            <Text className="font-display text-body-lg font-semibold text-on-primary">
               Primary Button
             </Text>
           </View>
           {/* Secondary */}
           <View
-            className={`rounded-roundedness-xl px-6 py-4 items-center ${
+            className={`items-center rounded-roundedness-xl px-6 py-4 ${
               isDark ? 'bg-surface-container-highest' : 'bg-light-surface-container-highest'
             }`}
           >
             <Text
-              className={`font-body font-semibold text-body-lg ${
+              className={`font-body text-body-lg font-semibold ${
                 isDark ? 'text-on-surface' : 'text-light-on-surface'
               }`}
             >
@@ -170,8 +181,8 @@ export default function HomeScreen() {
             </Text>
           </View>
           {/* Tertiary */}
-          <View className="px-6 py-4 items-center">
-            <Text className="text-primary font-body font-semibold text-body-lg">
+          <View className="items-center px-6 py-4">
+            <Text className="font-body text-body-lg font-semibold text-primary">
               Tertiary Button
             </Text>
           </View>

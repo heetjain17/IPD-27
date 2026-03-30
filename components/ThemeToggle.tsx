@@ -21,9 +21,7 @@ export function ThemeToggle() {
       onPress={toggleTheme}
       className={[
         'items-center justify-center rounded-roundedness-full p-3',
-        isDark
-          ? 'bg-surface-container-highest'
-          : 'bg-light-surface-container-highest',
+        isDark ? 'bg-surface-container-highest' : 'bg-light-surface-container-highest',
       ].join(' ')}
       accessibilityRole="button"
       accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
