@@ -1,24 +1,39 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { View } from 'react-native';
 import 'react-native-reanimated';
+import '../global.css';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ThemeProvider, useAppTheme } from '@/context/ThemeContext';
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
-
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+/**
+ * Inner layout — reads theme from context and applies the `dark` class to the
+ * root View, which activates all NativeWind `dark:` variants app-wide.
+ */
+function RootLayoutInner() {
+  const { colorScheme } = useAppTheme();
+  const isDark = colorScheme === 'dark';
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
+    <NavThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+      {/* This View's className controls NativeWind dark-mode for the whole tree */}
+      <View className={`flex-1 ${isDark ? 'dark' : ''}`}>
+        <Stack screenOptions={{ headerShown: false }} />
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+      </View>
+    </NavThemeProvider>
+  );
+}
+
+/**
+ * Root layout — wraps the entire app in ThemeProvider so any descendant
+ * can call useAppTheme() or use dark: Tailwind variants via NativeWind.
+ */
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <RootLayoutInner />
     </ThemeProvider>
   );
 }
