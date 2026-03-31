@@ -7,29 +7,30 @@ module.exports = {
     './context/**/*.{js,jsx,ts,tsx}',
   ],
   presets: [require('nativewind/preset')],
-  // Class-based dark mode: add className="dark" to root View to activate
   darkMode: 'class',
   theme: {
     extend: {
       // ─── Luminescent Curator Palette ───────────────────────────────────────
       colors: {
-        // Dark mode surfaces (default)
-        'surface-lowest': '#000000',
-        surface: '#0e0e0e',
+        // Dark surfaces (matches reference exactly)
+        'surface-container-lowest': '#000000',
         'surface-container-low': '#131313',
+        surface: '#0e0e0e',
         'surface-container': '#191a1a',
-        'surface-container-high': '#202020',
+        'surface-container-high': '#1f2020',
         'surface-container-highest': '#262626',
+        'surface-bright': '#2c2c2c',
 
-        // Primary accent — the "laser"
+        // Primary accent
         primary: '#d7fd4e',
         'primary-container': '#a6c913',
         'on-primary': '#4d5f00',
 
-        // Text on surfaces
+        // Text
         'on-surface': '#ffffff',
         'on-surface-variant': '#adaaaa',
         'outline-variant': '#484848',
+        outline: '#767575',
 
         // Light mode surfaces
         'light-surface-lowest': '#ffffff',
@@ -38,8 +39,6 @@ module.exports = {
         'light-surface-container': '#e5e5e5',
         'light-surface-container-high': '#d9d9d9',
         'light-surface-container-highest': '#cccccc',
-
-        // Light mode text
         'light-on-surface': '#0e0e0e',
         'light-on-surface-variant': '#555555',
         'light-outline-variant': '#c0c0c0',
@@ -74,13 +73,6 @@ module.exports = {
         'body-lg': ['1rem', { lineHeight: '1.6' }],
         'body-sm': ['0.875rem', { lineHeight: '1.5' }],
         'label-sm': ['0.75rem', { lineHeight: '1.4', letterSpacing: '0.05em' }],
-      },
-
-      // ─── Spacing Scale ─────────────────────────────────────────────────────
-      spacing: {
-        18: '4.5rem',
-        22: '5.5rem',
-        26: '6.5rem',
       },
     },
   },
