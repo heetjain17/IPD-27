@@ -1,4 +1,3 @@
-import { IconCompass } from '@tabler/icons-react-native';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 

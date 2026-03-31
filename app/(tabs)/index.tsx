@@ -7,7 +7,6 @@ import {
 } from '@tabler/icons-react-native';
 import React, { useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CategoryRow } from '@/components/discover/CategoryRow';
 import { DiscoverSearchBar } from '@/components/discover/DiscoverSearchBar';
@@ -15,8 +14,8 @@ import { FeedTabs } from '@/components/discover/FeedTabs';
 import { HeroCard } from '@/components/discover/HeroCard';
 import { LocationChips } from '@/components/discover/LocationChips';
 import { PlaceCard } from '@/components/shared/PlaceCard';
+import { ScreenWrapper } from '@/components/shared/ScreenWrapper';
 import { SectionHeader } from '@/components/shared/SectionHeader';
-import { useAppTheme } from '@/context/ThemeContext';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -69,16 +68,11 @@ const FEED_ITEMS = [
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function DiscoverScreen() {
-  const { colorScheme } = useAppTheme();
-  const isDark = colorScheme === 'dark';
   const [activeCategory, setActiveCategory] = useState(0);
   const [activeFeedTab, setActiveFeedTab] = useState(0);
 
   return (
-    <SafeAreaView
-      className={`flex-1 ${isDark ? 'bg-surface-container-lowest' : 'bg-light-surface-lowest'}`}
-      edges={['top']}
-    >
+    <ScreenWrapper>
       {/* Sticky search bar */}
       <DiscoverSearchBar />
 
@@ -118,6 +112,6 @@ export default function DiscoverScreen() {
           ))}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
