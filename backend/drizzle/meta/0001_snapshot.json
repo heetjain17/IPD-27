@@ -53,12 +53,8 @@
           "name": "place_media_place_id_places_id_fk",
           "tableFrom": "place_media",
           "tableTo": "places",
-          "columnsFrom": [
-            "place_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["place_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -66,12 +62,8 @@
           "name": "place_media_uploaded_by_users_id_fk",
           "tableFrom": "place_media",
           "tableTo": "users",
-          "columnsFrom": [
-            "uploaded_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["uploaded_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -105,12 +97,8 @@
           "name": "place_tags_place_id_places_id_fk",
           "tableFrom": "place_tags",
           "tableTo": "places",
-          "columnsFrom": [
-            "place_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["place_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -118,12 +106,8 @@
           "name": "place_tags_tag_id_tags_id_fk",
           "tableFrom": "place_tags",
           "tableTo": "tags",
-          "columnsFrom": [
-            "tag_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tag_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -131,10 +115,7 @@
       "compositePrimaryKeys": {
         "place_tags_place_id_tag_id_pk": {
           "name": "place_tags_place_id_tag_id_pk",
-          "columns": [
-            "place_id",
-            "tag_id"
-          ]
+          "columns": ["place_id", "tag_id"]
         }
       },
       "uniqueConstraints": {},
@@ -315,12 +296,8 @@
           "name": "places_created_by_users_id_fk",
           "tableFrom": "places",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -396,12 +373,8 @@
           "name": "reviews_user_id_users_id_fk",
           "tableFrom": "reviews",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -409,12 +382,8 @@
           "name": "reviews_place_id_places_id_fk",
           "tableFrom": "reviews",
           "tableTo": "places",
-          "columnsFrom": [
-            "place_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["place_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -471,12 +440,8 @@
           "name": "saved_places_user_id_users_id_fk",
           "tableFrom": "saved_places",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -484,12 +449,8 @@
           "name": "saved_places_place_id_places_id_fk",
           "tableFrom": "saved_places",
           "tableTo": "places",
-          "columnsFrom": [
-            "place_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["place_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -497,10 +458,7 @@
       "compositePrimaryKeys": {
         "saved_places_user_id_place_id_pk": {
           "name": "saved_places_user_id_place_id_pk",
-          "columns": [
-            "user_id",
-            "place_id"
-          ]
+          "columns": ["user_id", "place_id"]
         }
       },
       "uniqueConstraints": {},
@@ -533,9 +491,7 @@
         "tags_name_unique": {
           "name": "tags_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "policies": {},
@@ -574,9 +530,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -588,11 +542,7 @@
     "public.place_source": {
       "name": "place_source",
       "schema": "public",
-      "values": [
-        "google",
-        "user",
-        "admin"
-      ]
+      "values": ["google", "user", "admin"]
     }
   },
   "schemas": {},

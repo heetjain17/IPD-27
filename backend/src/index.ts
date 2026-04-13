@@ -5,9 +5,11 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { sql } from 'drizzle-orm';
 
-import { db } from './db/index.js';
+import { db } from './db/client.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
-import { getEnv } from './utils/index.js';
+import { getEnv } from './utils/getEnv.js';
+
+import authRoutes from './modules/auth/routes.js';
 
 const PORT = getEnv('PORT');
 // const FRONTEND_URL = getEnv('FRONTEND_URL');
@@ -27,19 +29,32 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-// Health check endpoint — used by Docker/load balancers
+// Health check endpoint
 app.get('/health', async (_req, res) => {
   try {
     await db.execute(sql`SELECT 1`);
-    res.status(200).json({ status: 'ok', db: 'ok' });
-  } catch {
-    res.status(503).json({ status: 'error', db: 'unreachable' });
+    res.status(200).json({
+      success: true,
+      data: {
+        status: 'ok',
+        db: 'connected',
+      },
+      error: null,
+    });
+  } catch (error) {
+    res.status(503).json({
+      success: false,
+      data: null,
+      error: {
+        code: 'DB_UNREACHABLE',
+        message: error,
+      },
+    });
   }
 });
 
-// TODO: Add your routes here
-// app.use('/api/v1/auth', authRoutes);
-// app.use('/api/v1/places', placesRoutes);
+// Routes
+app.use('/api/v1/auth', authRoutes);
 
 // Error handling
 app.use(errorMiddleware);

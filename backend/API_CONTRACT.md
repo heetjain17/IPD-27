@@ -48,32 +48,39 @@ Before writing endpoints:
 
 # 2) Auth API
 
-**Implementation:** Uses Supabase Auth under the hood
+**Implementation:** Hybrid Supabase Auth (Backend API Primary)
 
 - Backend creates Supabase auth user via Admin API
-- Backend creates profile entry in `public.users` table
-- Returns Supabase JWT to client
+- Backend creates profile entry in `public.users` table (with `auth_id` reference)
+- Returns Supabase JWT + sets HTTP-only cookies
+- Mobile/web calls backend API, NOT Supabase directly
+- Tokens: `accessToken` (short-lived) + `refreshToken` (30 days)
+- Cookies: `accessToken` and `refreshToken` (HTTP-only, secure, SameSite strict)
 
-## POST /auth/register
+## POST /api/v1/auth/register
 
 ### Request
 
 ```json
 {
   "email": "user@example.com",
-  "password": "string"
+  "password": "string",
+  "name": "John Doe" // optional
 }
 ```
 
-### Response
+### Response (201 Created)
 
 ```json
 {
   "success": true,
+  "statusCode": 201,
+  "message": "User registered successfully",
   "data": {
     "user": {
       "id": "uuid",
       "email": "user@example.com",
+      "name": "John Doe",
       "createdAt": "2024-01-01T00:00:00Z"
     },
     "session": {
@@ -85,15 +92,30 @@ Before writing endpoints:
 }
 ```
 
+### Cookies Set
+
+```
+Set-Cookie: accessToken=<jwt>; HttpOnly; Secure; SameSite=Strict; Max-Age=3600
+Set-Cookie: refreshToken=<token>; HttpOnly; Secure; SameSite=Strict; Max-Age=2592000; Path=/api/v1/auth/refresh
+```
+
 ### Notes
 
-- Password is handled by Supabase Auth (bcrypt hashing)
-- `user.id` is from `public.users` table (references `auth.users.id`)
-- No `passwordHash` stored in `public.users`
+- Password is handled by Supabase Auth (never stored locally)
+- `user.id` is from `public.users` table
+- `auth_id` field references Supabase `auth.users.id`
+- No `passwordHash` in `public.users` table
+- Tokens returned in response body AND set as cookies
+- Refresh token cookie restricted to `/api/v1/auth/refresh` path
+
+### Errors
+
+- `409 Conflict` - User with email already exists
+- `400 Bad Request` - Validation error or Supabase auth error
 
 ---
 
-## POST /auth/login
+## POST /api/v1/auth/login
 
 ### Request
 
@@ -104,15 +126,19 @@ Before writing endpoints:
 }
 ```
 
-### Response
+### Response (200 OK)
 
 ```json
 {
   "success": true,
+  "statusCode": 200,
+  "message": "Login successful",
   "data": {
     "user": {
       "id": "uuid",
-      "email": "user@example.com"
+      "email": "user@example.com",
+      "name": "John Doe",
+      "createdAt": "2024-01-01T00:00:00Z"
     },
     "session": {
       "accessToken": "supabase-jwt-token",
@@ -123,15 +149,28 @@ Before writing endpoints:
 }
 ```
 
+### Cookies Set
+
+```
+Set-Cookie: accessToken=<jwt>; HttpOnly; Secure; SameSite=Strict; Max-Age=3600
+Set-Cookie: refreshToken=<token>; HttpOnly; Secure; SameSite=Strict; Max-Age=2592000; Path=/api/v1/auth/refresh
+```
+
 ### Notes
 
-- Credentials verified via Supabase Auth
+- Credentials verified via Supabase `signInWithPassword`
 - Returns Supabase-managed JWT
 - JWT contains user claims for auth middleware
+- Tokens returned in response body AND set as cookies
+
+### Errors
+
+- `401 Unauthorized` - Invalid credentials
+- `404 Not Found` - User profile not found in local DB
 
 ---
 
-## POST /auth/logout
+## POST /api/v1/auth/logout
 
 ### Headers
 
@@ -139,25 +178,39 @@ Before writing endpoints:
 Authorization: Bearer <access-token>
 ```
 
-### Response
+**OR** uses `accessToken` cookie if header not present
+
+### Response (200 OK)
 
 ```json
 {
   "success": true,
-  "data": {
-    "message": "Logged out successfully"
-  }
+  "statusCode": 200,
+  "message": "Logged out successfully"
 }
 ```
 
+### Cookies Cleared
+
+```
+Set-Cookie: accessToken=; HttpOnly; Secure; SameSite=Strict; Max-Age=0
+Set-Cookie: refreshToken=; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Path=/api/v1/auth/refresh
+```
+
 ### Notes
 
-- Invalidates Supabase session
-- Client should clear stored tokens
+- Invalidates Supabase session via Admin API
+- Clears both `accessToken` and `refreshToken` cookies
+- Accepts token from header OR cookie
+
+### Errors
+
+- `401 Unauthorized` - No token provided
+- `500 Internal Server Error` - Failed to logout
 
 ---
 
-## GET /auth/me
+## GET /api/v1/auth/me
 
 ### Headers
 
@@ -165,14 +218,19 @@ Authorization: Bearer <access-token>
 Authorization: Bearer <access-token>
 ```
 
-### Response
+**OR** uses `accessToken` cookie if header not present
+
+### Response (200 OK)
 
 ```json
 {
   "success": true,
+  "statusCode": 200,
+  "message": "User retrieved successfully",
   "data": {
     "id": "uuid",
     "email": "user@example.com",
+    "name": "John Doe",
     "createdAt": "2024-01-01T00:00:00Z"
   }
 }
@@ -181,7 +239,65 @@ Authorization: Bearer <access-token>
 ### Notes
 
 - Returns current user from `public.users` table
-- Requires valid Supabase JWT
+- Requires valid Supabase JWT (verified via `auth.getUser`)
+- Accepts token from header OR cookie
+- User identified by `auth_id` from JWT claims
+
+### Errors
+
+- `401 Unauthorized` - Invalid or expired token
+- `404 Not Found` - User profile not found
+
+---
+
+## POST /api/v1/auth/refresh
+
+### Request
+
+No body required. Uses `refreshToken` from cookie.
+
+### Response (200 OK)
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Token refreshed successfully",
+  "data": {
+    "user": {
+      "id": "uuid",
+      "email": "user@example.com",
+      "name": "John Doe",
+      "createdAt": "2024-01-01T00:00:00Z"
+    },
+    "session": {
+      "accessToken": "new-supabase-jwt-token",
+      "refreshToken": "new-refresh-token",
+      "expiresIn": 3600
+    }
+  }
+}
+```
+
+### Cookies Set
+
+```
+Set-Cookie: accessToken=<new-jwt>; HttpOnly; Secure; SameSite=Strict; Max-Age=3600
+Set-Cookie: refreshToken=<new-token>; HttpOnly; Secure; SameSite=Strict; Max-Age=2592000; Path=/api/v1/auth/refresh
+```
+
+### Notes
+
+- Uses `refreshToken` from cookie (path-restricted)
+- Calls Supabase `auth.refreshSession()` to get new tokens
+- Returns new access token + new refresh token (token rotation)
+- Updates both cookies with new tokens
+- No Authorization header required
+
+### Errors
+
+- `401 Unauthorized` - No refresh token provided or invalid/expired refresh token
+- `404 Not Found` - User profile not found
 
 ---
 

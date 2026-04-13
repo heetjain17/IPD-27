@@ -64,17 +64,25 @@ src/
 
 Responsibilities:
 
-- `POST /auth/register` — hash password (bcrypt), insert user, return JWT
-- `POST /auth/login` — validate credentials, return JWT
-- JWT middleware (`src/middleware/auth.middleware.ts`) — verify token, attach `req.user`
+- `POST /auth/register` — Create user in Supabase Auth + local users table, return session
+- `POST /auth/login` — Validate credentials via Supabase, return session
+- `POST /auth/logout` — Invalidate session in Supabase
+- `GET /auth/me` — Get current user profile
+- `POST /auth/refresh` — Refresh access token using refresh token
+- JWT middleware (`src/middleware/auth.middleware.ts`) — verify Supabase JWT, attach `req.user`
 
 Rules:
 
-- Passwords are always hashed with bcrypt (min 10 rounds) before DB insert.
-- Never return password hashes in any response.
-- JWT secret is read from `process.env.JWT_SECRET`. Never hardcode it.
-- The auth middleware is the single gatekeeper. All protected routes use it.
-- Auth module does NOT own the users table in the sense of profile data — that belongs to User module.
+- **Hybrid Supabase Auth approach**: Supabase handles passwords/sessions, backend is primary API interface
+- Users table has `auth_id` (references Supabase auth.users.id), NO `password_hash` field
+- Passwords are handled by Supabase Auth Admin API — never store them locally
+- Sessions include `accessToken` (short-lived) and `refreshToken` (long-lived, 30 days)
+- Both tokens are set as HTTP-only cookies AND returned in response body
+- Cookie settings: `httpOnly: true`, `secure: true` (production), `sameSite: 'strict'`
+- Refresh token cookie has `path: '/api/v1/auth/refresh'` restriction
+- Auth middleware checks Authorization header first, falls back to cookies
+- Never return Supabase service role key to client
+- Auth module creates user in local DB during register — this is intentional exception
 
 ### 2. User Module (`src/modules/user/`)
 
@@ -138,6 +146,100 @@ Rules:
 
 ---
 
+## Utilities and Middleware
+
+### Core Utilities (`src/utils/`)
+
+**`ApiError.ts`** - Standard error class
+
+```typescript
+class ApiError extends Error {
+  constructor(public statusCode: number, public message: string, public isOperational = true)
+}
+```
+
+Usage: `throw new ApiError(404, 'Resource not found');`
+
+**`apiSuccess.ts`** - Standard success response formatter
+
+```typescript
+apiSuccess(statusCode: number, message: string, data?: T)
+```
+
+Usage: `res.json(apiSuccess(200, 'Success', data));`
+
+**`asyncHandler.ts`** - Wraps async route handlers to catch errors
+
+```typescript
+export const asyncHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
+```
+
+Usage: `export const login = asyncHandler(async (req, res) => { ... });`
+
+**`getEnv.ts`** - Type-safe environment variable getter
+
+```typescript
+getEnv(key: string): string  // throws if not found
+```
+
+Usage: `const port = getEnv('PORT');`
+
+### Middleware (`src/middleware/`)
+
+**`auth.middleware.ts`** - JWT verification
+
+- Checks `Authorization: Bearer <token>` header first
+- Falls back to `accessToken` cookie
+- Verifies token with Supabase `auth.getUser()`
+- Attaches `user` object to request: `{ authId, email }`
+- Throws `ApiError(401)` if invalid/missing
+
+**`validate.middleware.ts`** - Request validation
+
+- Takes Zod schema as parameter
+- Validates `req.body` against schema
+- Returns 400 with validation errors if invalid
+- Replaces `req.body` with parsed data if valid
+  Usage: `router.post('/login', validate(loginSchema), controller.login);`
+
+**`error.middleware.ts`** - Centralized error handler
+
+- Catches all thrown errors
+- Formats ApiError instances properly
+- Returns standard error response format
+- Never leaks stack traces in production
+
+### Type Definitions (`src/types/`)
+
+**`auth.d.ts`** - Authenticated request type
+
+```typescript
+export interface AuthenticatedRequest extends Request {
+  user?: {
+    authId: string;
+    email: string;
+  };
+}
+```
+
+Usage: `(req as AuthenticatedRequest).user?.authId`
+
+**`express.d.ts`** - Express type extensions (if needed)
+
+### Patterns to Follow
+
+1. **Always use `asyncHandler`** for async route handlers
+2. **Always throw `ApiError`** for operational errors (don't return error responses)
+3. **Always use `apiSuccess`** for success responses
+4. **Always use `getEnv`** instead of `process.env`
+5. **Always validate with Zod schemas** before controller logic
+6. **Never use `any` type** - use type assertions or proper types
+7. **Always use type assertion** for authenticated requests: `(req as AuthenticatedRequest)`
+
+---
+
 ## Database
 
 ### Conventions
@@ -149,10 +251,11 @@ Rules:
 
 ### Key constraints
 
+- `users.auth_id` — UNIQUE, NOT NULL (references Supabase auth.users.id)
 - `users.email` — UNIQUE, NOT NULL
-- `users.password_hash` — NOT NULL (never `password`)
+- `users.password_hash` — DOES NOT EXIST (Supabase handles passwords)
 - `saved_places (user_id, place_id)` — UNIQUE composite constraint
-- `places.location` — `GEOGRAPHY(POINT, 4326)` type
+- `places.geom` — `GEOGRAPHY(POINT, 4326)` type (PostGIS)
 
 ### PostGIS setup
 
@@ -194,15 +297,18 @@ Always double-check parameter order. This is the most common PostGIS mistake.
 ## API surface (V1 only)
 
 ```
-POST   /auth/register
-POST   /auth/login
+POST   /api/v1/auth/register
+POST   /api/v1/auth/login
+POST   /api/v1/auth/logout      (auth required)
+GET    /api/v1/auth/me          (auth required)
+POST   /api/v1/auth/refresh
 
-GET    /places/nearby        ?lat=&lng=&radius=
-GET    /places/:id
+GET    /api/v1/places/nearby    ?lat=&lng=&radius=
+GET    /api/v1/places/:id
 
-POST   /places/save          (auth required)
-DELETE /places/save/:id      (auth required)
-GET    /places/saved         (auth required)
+POST   /api/v1/places/save      (auth required)
+DELETE /api/v1/places/save/:id (auth required)
+GET    /api/v1/places/saved     (auth required)
 
 GET    /health
 ```
@@ -216,13 +322,51 @@ Do not add endpoints outside this list without explicit developer instruction.
 Use a centralised error handler (`src/middleware/error.middleware.ts`).
 All errors flow through it. Controllers never send error responses directly.
 
-Standard error shape:
+### ApiError class (`src/utils/ApiError.ts`)
+
+All errors should throw `ApiError`:
+
+```typescript
+throw new ApiError(statusCode: number, message: string);
+```
+
+Examples:
+
+- `throw new ApiError(404, 'User not found');`
+- `throw new ApiError(409, 'User with this email already exists');`
+- `throw new ApiError(401, 'Invalid credentials');`
+
+### Standard response formats
+
+**Success** (use `apiSuccess` utility from `src/utils/apiSuccess.ts`):
+
+```typescript
+return res.json(apiSuccess(statusCode, message, data?));
+// Example: res.json(apiSuccess(200, 'Login successful', result));
+```
+
+Response shape:
 
 ```json
 {
-  "status": "error",
-  "code": 404,
-  "message": "Place not found"
+  "success": true,
+  "statusCode": 200,
+  "message": "Login successful",
+  "data": { ... }
+}
+```
+
+**Error** (thrown as ApiError, caught by error middleware):
+
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid request data",
+    "details": [ ... ]  // optional
+  }
 }
 ```
 
@@ -232,7 +376,7 @@ HTTP status codes to use:
 - `401` — missing or invalid JWT
 - `403` — authenticated but not authorised
 - `404` — resource not found
-- `409` — conflict (e.g. duplicate saved place)
+- `409` — conflict (e.g. duplicate user, duplicate saved place)
 - `500` — unexpected server error (never leak stack traces in production)
 
 ---
@@ -241,26 +385,28 @@ HTTP status codes to use:
 
 ```
 PORT
-NODE_ENV               (development | production)
-JWT_SECRET
-JWT_EXPIRES_IN         (e.g. 7d)
-SUPABASE_URL
-SUPABASE_ANON_KEY
-SUPABASE_SERVICE_KEY   (never expose to client)
-DATABASE_URL           (direct connection string for migrations)
+NODE_ENV                    (development | production)
+SUPABASE_URL                (e.g. https://xxx.supabase.co)
+SUPABASE_ANON_KEY           (public key for client SDK)
+SUPABASE_SERVICE_ROLE_KEY   (NEVER expose to client, server-side only)
+DATABASE_URL                (PostgreSQL connection string)
 ```
 
-All env vars are validated at startup. If any required var is missing, the server must refuse to start with a clear error message.
+All env vars are validated at startup using `getEnv()` utility. If any required var is missing, the server must refuse to start with a clear error message.
+
+**Important**: Use `getEnv('VAR_NAME')` instead of `process.env.VAR_NAME` for type safety and validation.
 
 ---
 
 ## TypeScript rules
 
 - Strict mode is on (`"strict": true` in tsconfig).
-- No `any` types. Use `unknown` and narrow it, or define a proper type.
+- No `any` types. Use proper types or type assertions when necessary.
 - All service method return types must be explicitly declared.
 - Request body types are inferred from Zod schemas using `z.infer<>`.
-- DB row types are generated from Supabase MCP (`npx supabase gen types typescript`). Do not hand-write them.
+- DB row types are inferred from Drizzle schema using `typeof table.$inferSelect`.
+- For authenticated requests, use type assertion: `(req as AuthenticatedRequest).user`
+- AuthenticatedRequest type is defined in `src/types/auth.d.ts`
 
 ---
 

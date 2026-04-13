@@ -1,0 +1,23 @@
+info:
+  name: register
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:3000/api/v1/auth/register
+  body:
+    type: json
+    data: |-
+      {
+        "email": "he@gmail.com",
+        "password": "hee@gmail12",
+        "name": "hee"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

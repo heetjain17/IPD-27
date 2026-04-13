@@ -24,11 +24,14 @@ const geography = customType<{ data: string }>({
 export const placeSourceEnum = pgEnum('place_source', ['google', 'user', 'admin']);
 
 // USERS
+// Note: auth_id references Supabase auth.users.id
+// Supabase handles password hashing, we only store profile data
 
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
+  authId: uuid('auth_id').notNull().unique(), // References Supabase auth.users.id
   email: text('email').notNull().unique(),
-  // passwordHash: text('password_hash').notNull(),
+  name: text('name'), // Optional profile field
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
