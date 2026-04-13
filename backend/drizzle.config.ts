@@ -1,13 +1,13 @@
 import type { Config } from 'drizzle-kit';
-import { getEnv } from './src/utils/getEnv.js';
-
-const DATABASE_URL = getEnv('DATABASE_URL');
+import 'dotenv/config';
 
 export default {
   schema: './src/db/schema.ts',
-  out: './migrations',
+  out: './drizzle',
   dialect: 'postgresql',
   dbCredentials: {
-    url: DATABASE_URL,
+    url: process.env.DATABASE_URL!,
+    ssl: true,
   },
+  tablesFilter: ['!spatial_ref_sys', '!geography_columns', '!geometry_columns'],
 } satisfies Config;
