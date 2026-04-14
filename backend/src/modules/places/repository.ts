@@ -71,3 +71,8 @@ export async function getPlacesByIds(ids: string[]): Promise<PlaceWithEnrichment
     media: mediaByPlace.get(place.id) ?? [],
   }));
 }
+
+export async function getPlaceById(id: string): Promise<PlaceWithEnrichment | null> {
+  const rows = await getPlacesByIds([id]);
+  return rows[0] ?? null;
+}

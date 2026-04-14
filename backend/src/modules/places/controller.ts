@@ -3,7 +3,7 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { apiSuccess } from '../../utils/apiSuccess.js';
 import { ApiError } from '../../utils/ApiError.js';
 import * as placesService from './service.js';
-import type { NearbyQuery } from './schema.js';
+import type { NearbyQuery, PlaceIdParams } from './schema.js';
 
 /**
  * GET /api/v1/places/nearby?lat=&lng=&radius=&limit=&cursor=
@@ -19,4 +19,14 @@ export const nearby = asyncHandler(async (req: Request, res: Response) => {
 
   const result = await placesService.findNearby(query);
   return res.json(apiSuccess(200, 'Nearby places retrieved', result));
+});
+
+export const getById = asyncHandler(async (req: Request, res: Response) => {
+  const params = req.validated?.params as PlaceIdParams | undefined;
+  if (!params) {
+    throw new ApiError(400, 'Invalid route parameters');
+  }
+
+  const place = await placesService.getById(params.id);
+  return res.json(apiSuccess(200, 'Place retrieved', place));
 });

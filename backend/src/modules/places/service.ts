@@ -1,7 +1,9 @@
 import * as locationService from '../location/service.js';
 import * as placesRepo from './repository.js';
+import { ApiError } from '../../utils/ApiError.js';
+import { placeDetailSchema } from './schema.js';
 import type { NearbyQuery } from './schema.js';
-import type { NearbyResponse, PlaceSummary } from './types.js';
+import type { NearbyResponse, PlaceDetail, PlaceSummary } from './types.js';
 
 /**
  * GET /places/nearby
@@ -67,4 +69,27 @@ export async function findNearby(query: NearbyQuery): Promise<NearbyResponse> {
   }
 
   return { places: summaries, nextCursor };
+}
+
+export async function getById(id: string): Promise<PlaceDetail> {
+  const place = await placesRepo.getPlaceById(id);
+
+  if (!place) {
+    throw new ApiError(404, 'Place not found');
+  }
+
+  const detail: PlaceDetail = {
+    id: place.id,
+    name: place.name,
+    description: place.description ?? null,
+    lat: place.lat,
+    lng: place.lng,
+    category: place.category,
+    averageRating: place.averageRating,
+    reviewCount: place.reviewCount,
+    tags: place.tags ?? [],
+    media: place.media ?? [],
+  };
+
+  return placeDetailSchema.parse(detail);
 }

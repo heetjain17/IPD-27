@@ -12,4 +12,27 @@ export const nearbyQuerySchema = z.object({
   cursor: z.string().min(1).optional(),
 });
 
+export const placeIdParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
+export const placeDetailSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  description: z.string().nullable(),
+  lat: z.number(),
+  lng: z.number(),
+  category: z.string(),
+  averageRating: z.number(),
+  reviewCount: z.number().int(),
+  tags: z.array(z.string()),
+  media: z.array(
+    z.object({
+      url: z.string(),
+      type: z.string().nullable(),
+    }),
+  ),
+});
+
 export type NearbyQuery = z.infer<typeof nearbyQuerySchema>;
+export type PlaceIdParams = z.infer<typeof placeIdParamsSchema>;
