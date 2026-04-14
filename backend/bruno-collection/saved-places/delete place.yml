@@ -5,7 +5,7 @@ info:
 
 http:
   method: DELETE
-  url: http://localhost:3000/api/v1/places/save
+  url: http://localhost:3000/api/v1/places/save/75fddb0e-37e2-4c9e-8e0e-4754dcc84665
   body:
     type: json
     data: |-

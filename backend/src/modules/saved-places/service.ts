@@ -2,7 +2,7 @@ import { ApiError } from '../../utils/ApiError.js';
 import * as authService from '../auth/service.js';
 import * as placesService from '../places/service.js';
 import * as savedPlacesRepo from './repository.js';
-import type { SavePlaceResponse } from './types.js';
+import type { DeleteSavedPlaceResponse, SavePlaceResponse } from './types.js';
 
 function isUniqueViolation(error: unknown): boolean {
   if (!error || typeof error !== 'object') {
@@ -41,4 +41,18 @@ export async function savePlace(authId: string, placeId: string): Promise<SavePl
   }
 
   return { saved: true };
+}
+
+export async function deleteSavedPlace(
+  authId: string,
+  placeId: string,
+): Promise<DeleteSavedPlaceResponse> {
+  const user = await authService.getCurrentUser(authId);
+  const deleted = await savedPlacesRepo.deleteSavedPlace(user.id, placeId);
+
+  if (!deleted) {
+    throw new ApiError(404, 'Saved place not found');
+  }
+
+  return { saved: false };
 }

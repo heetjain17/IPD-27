@@ -5,3 +5,7 @@ export interface SavePlaceBody {
 export interface SavePlaceResponse {
   saved: true;
 }
+
+export interface DeleteSavedPlaceResponse {
+  saved: false;
+}
