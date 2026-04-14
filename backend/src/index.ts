@@ -11,6 +11,7 @@ import { getEnv } from './utils/getEnv.js';
 
 import authRoutes from './modules/auth/routes.js';
 import placesRoutes from './modules/places/routes.js';
+import savedPlacesRoutes from './modules/saved-places/routes.js';
 
 const PORT = getEnv('PORT');
 // const FRONTEND_URL = getEnv('FRONTEND_URL');
@@ -57,6 +58,7 @@ app.get('/health', async (_req, res) => {
 // Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/places', placesRoutes);
+app.use('/api/v1/places', savedPlacesRoutes);
 
 // Error handling
 app.use(errorMiddleware);
