@@ -10,6 +10,7 @@ import { errorMiddleware } from './middleware/error.middleware.js';
 import { getEnv } from './utils/getEnv.js';
 
 import authRoutes from './modules/auth/routes.js';
+import placesRoutes from './modules/places/routes.js';
 
 const PORT = getEnv('PORT');
 // const FRONTEND_URL = getEnv('FRONTEND_URL');
@@ -55,6 +56,7 @@ app.get('/health', async (_req, res) => {
 
 // Routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/places', placesRoutes);
 
 // Error handling
 app.use(errorMiddleware);
