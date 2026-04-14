@@ -13,6 +13,7 @@ import authRoutes from './modules/auth/routes.js';
 import placesRoutes from './modules/places/routes.js';
 import savedPlacesRoutes from './modules/saved-places/routes.js';
 import reviewsRoutes from './modules/reviews/routes.js';
+import tagsRoutes from './modules/tags/routes.js';
 
 const PORT = getEnv('PORT');
 // const FRONTEND_URL = getEnv('FRONTEND_URL');
@@ -61,6 +62,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/places', savedPlacesRoutes);
 app.use('/api/v1/places', placesRoutes);
 app.use('/api/v1/reviews', reviewsRoutes);
+app.use('/api/v1/tags', tagsRoutes);
 
 // Error handling
 app.use(errorMiddleware);
