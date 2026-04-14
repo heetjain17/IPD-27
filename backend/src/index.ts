@@ -57,8 +57,8 @@ app.get('/health', async (_req, res) => {
 
 // Routes
 app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/places', placesRoutes);
 app.use('/api/v1/places', savedPlacesRoutes);
+app.use('/api/v1/places', placesRoutes);
 
 // Error handling
 app.use(errorMiddleware);

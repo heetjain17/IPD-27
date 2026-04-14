@@ -3,7 +3,7 @@ import * as placesRepo from './repository.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { placeDetailSchema } from './schema.js';
 import type { NearbyQuery } from './schema.js';
-import type { NearbyResponse, PlaceDetail, PlaceSummary } from './types.js';
+import type { NearbyResponse, PlaceDetail, PlaceSummary, SavedPlaceSummary } from './types.js';
 
 /**
  * GET /places/nearby
@@ -92,4 +92,31 @@ export async function getById(id: string): Promise<PlaceDetail> {
   };
 
   return placeDetailSchema.parse(detail);
+}
+
+export async function getSavedPlaceSummariesByIds(ids: string[]): Promise<SavedPlaceSummary[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const placesData = await placesRepo.getPlacesByIds(ids);
+  const placeMap = new Map(placesData.map((place) => [place.id, place]));
+
+  const summaries: SavedPlaceSummary[] = [];
+  for (const id of ids) {
+    const place = placeMap.get(id);
+    if (!place) continue;
+
+    summaries.push({
+      id: place.id,
+      name: place.name,
+      lat: place.lat,
+      lng: place.lng,
+      category: place.category,
+      tags: place.tags,
+      thumbnail: place.media[0]?.url ?? null,
+    });
+  }
+
+  return summaries;
 }

@@ -11,6 +11,16 @@ export interface PlaceSummary {
   thumbnail: string | null; // first image URL, null if no media
 }
 
+export interface SavedPlaceSummary {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  category: string;
+  tags: string[];
+  thumbnail: string | null;
+}
+
 export interface PlaceDetail {
   id: string;
   name: string;
