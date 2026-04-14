@@ -9,9 +9,9 @@ import type {
 
 function parseNearbyCursor(cursor: string): NearbyDistanceCursor {
   try {
-    const parsed = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as
-      | Partial<NearbyDistanceCursor>
-      | null;
+    const parsed = JSON.parse(
+      Buffer.from(cursor, 'base64url').toString('utf8'),
+    ) as Partial<NearbyDistanceCursor> | null;
 
     if (
       !parsed ||

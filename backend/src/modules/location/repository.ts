@@ -15,7 +15,9 @@ interface DistanceRow {
  * Uses a CTE so ST_Distance is computed once and reused for cursor filtering.
  * ST_MakePoint(lng, lat) — longitude first, latitude second.
  */
-export async function findNearbyPlaces(params: FindNearbyRepositoryParams): Promise<NearbyResult[]> {
+export async function findNearbyPlaces(
+  params: FindNearbyRepositoryParams,
+): Promise<NearbyResult[]> {
   const { lat, lng, radiusMetres, limit, cursorDist, cursorId } = params;
 
   // Keyset filter: (distance, id) > (cursorDist, cursorId) for stable pagination
