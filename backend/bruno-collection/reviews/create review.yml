@@ -1,0 +1,23 @@
+info:
+  name: create review
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: http://localhost:3000/api/v1/reviews
+  body:
+    type: json
+    data: |-
+      {
+        "placeId": "14b0d3a0-5c09-46c8-ab8d-239e594d20ec",
+        "rating": 3.5,
+        "comment": "Okay place"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

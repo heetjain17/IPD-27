@@ -1,11 +1,15 @@
 info:
-  name: delete place
+  name: all reviews of a place
   type: http
-  seq: 1
+  seq: 4
 
 http:
-  method: DELETE
-  url: http://localhost:3000/api/v1/places/save/75fddb0e-37e2-4c9e-8e0e-4754dcc84665
+  method: GET
+  url: http://localhost:3000/api/v1/places/14b0d3a0-5c09-46c8-ab8d-239e594d20ec/reviews?limit=2
+  params:
+    - name: limit
+      value: "2"
+      type: query
   body:
     type: json
     data: |-
