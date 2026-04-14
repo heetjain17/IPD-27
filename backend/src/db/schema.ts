@@ -63,6 +63,10 @@ export const places = pgTable(
     websiteUrl: text('website_url'),
     priceLevel: integer('price_level'),
 
+    // Cached rating data (updated via trigger)
+    averageRating: doublePrecision('average_rating').default(0).notNull(),
+    reviewCount: integer('review_count').default(0).notNull(),
+
     // Metadata
     createdBy: uuid('created_by').references(() => users.id),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),

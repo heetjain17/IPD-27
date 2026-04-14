@@ -256,6 +256,53 @@ Usage: `(req as AuthenticatedRequest).user?.authId`
 - `users.password_hash` — DOES NOT EXIST (Supabase handles passwords)
 - `saved_places (user_id, place_id)` — UNIQUE composite constraint
 - `places.geom` — `GEOGRAPHY(POINT, 4326)` type (PostGIS)
+- `places.average_rating` — Cached column, updated via trigger
+- `places.review_count` — Cached column, updated via trigger
+
+### Cached Columns Pattern
+
+For frequently accessed aggregated data (like ratings), use cached columns with triggers instead of computing on every read:
+
+**Schema:**
+
+```typescript
+// In places table
+averageRating: doublePrecision('average_rating').default(0).notNull(),
+reviewCount: integer('review_count').default(0).notNull(),
+```
+
+**Trigger (custom SQL migration):**
+
+```sql
+CREATE OR REPLACE FUNCTION sync_place_rating()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE places
+  SET
+    average_rating = (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE place_id = COALESCE(NEW.place_id, OLD.place_id)),
+    review_count   = (SELECT COUNT(*) FROM reviews WHERE place_id = COALESCE(NEW.place_id, OLD.place_id))
+  WHERE id = COALESCE(NEW.place_id, OLD.place_id);
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_sync_place_rating
+AFTER INSERT OR UPDATE OR DELETE ON reviews
+FOR EACH ROW EXECUTE FUNCTION sync_place_rating();
+```
+
+**Benefits:**
+
+- Fast reads (no aggregation needed)
+- Always in sync (trigger-based)
+- No app-level logic required
+- Perfect for sorting/filtering by rating
+
+**When to use:**
+
+- Aggregated data accessed frequently (ratings, counts, averages)
+- Data that changes less often than it's read
+- Sorting/filtering requirements on aggregated values
 
 ### PostGIS setup
 
