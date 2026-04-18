@@ -29,6 +29,13 @@ interface PlacesPageRow {
   distance_metres: number | null;
 }
 
+interface GetPlaceMediaPageParams {
+  placeId: string;
+  limit: number;
+  cursorCreatedAt?: Date;
+  cursorId?: string;
+}
+
 function buildTagFilterClause(tagNames: string[], tagsMode: 'all' | 'any') {
   if (tagNames.length === 0) {
     return sql``;
@@ -356,4 +363,48 @@ export async function getPlaceById(id: string): Promise<PlaceWithEnrichment | nu
     ...place,
     media: mediaRows.map((row) => ({ url: row.url, type: row.type ?? null })),
   };
+}
+
+export async function placeExists(id: string): Promise<boolean> {
+  const rows = await db.select({ id: places.id }).from(places).where(eq(places.id, id)).limit(1);
+  return rows.length > 0;
+}
+
+export async function getPlaceMediaPage(
+  params: GetPlaceMediaPageParams,
+): Promise<{ id: string; url: string; type: string | null; createdAt: Date }[]> {
+  const { placeId, limit, cursorCreatedAt, cursorId } = params;
+
+  const rows = await db
+    .select({
+      id: placeMedia.id,
+      url: placeMedia.url,
+      type: placeMedia.type,
+      createdAt: placeMedia.createdAt,
+    })
+    .from(placeMedia)
+    .where(
+      sql`
+        ${placeMedia.placeId} = ${placeId}
+        ${
+          cursorCreatedAt && cursorId
+            ? sql`
+              AND (
+                ${placeMedia.createdAt} > ${cursorCreatedAt}
+                OR (${placeMedia.createdAt} = ${cursorCreatedAt} AND ${placeMedia.id} > ${cursorId})
+              )
+            `
+            : sql``
+        }
+      `,
+    )
+    .orderBy(asc(placeMedia.createdAt), asc(placeMedia.id))
+    .limit(limit + 1);
+
+  return rows.map((row) => ({
+    id: row.id,
+    url: row.url,
+    type: row.type ?? null,
+    createdAt: row.createdAt,
+  }));
 }

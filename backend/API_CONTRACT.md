@@ -574,6 +574,12 @@ cursor: string (optional)
 - Public endpoint
 - Dedicated media endpoint prevents unbounded media payloads in list and detail responses
 - Uses cursor pagination
+- Ordered by `createdAt ASC, id ASC` for stable pagination
+
+### Errors
+
+- `400 Bad Request` - Invalid `limit`/`cursor`
+- `404 Not Found` - Place not found
 
 ---
 

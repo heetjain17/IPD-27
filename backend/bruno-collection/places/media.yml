@@ -1,0 +1,26 @@
+info:
+  name: media
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: http://localhost:3000/api/v1/places/90451fd0-ed83-4df7-99de-f6ec14b01496/media?limit=20
+  params:
+    - name: limit
+      value: "20"
+      type: query
+    - name: cursor
+      value: ""
+      type: query
+      disabled: true
+  body:
+    type: json
+    data: ""
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

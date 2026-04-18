@@ -2,12 +2,13 @@ import * as locationService from '../location/service.js';
 import * as placesRepo from './repository.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { placeDetailSchema } from './schema.js';
-import type { NearbyQuery, PlacesListQuery } from './schema.js';
+import type { NearbyQuery, PlaceMediaQuery, PlacesListQuery } from './schema.js';
 import type {
   NearbyResponse,
   PlaceDetail,
   PlaceFiltersResponse,
   PlaceListItem,
+  PlaceMediaResponse,
   PlaceSummary,
   PriceRangeOption,
   PlacesListResponse,
@@ -17,6 +18,11 @@ import type {
 interface PlacesCursorPayload {
   id: string;
   sortValue: number;
+}
+
+interface PlaceMediaCursorPayload {
+  id: string;
+  createdAt: string;
 }
 
 const PLACE_DETAIL_MEDIA_LIMIT = 10;
@@ -46,6 +52,42 @@ function parsePlacesCursor(cursor: string): PlacesCursorPayload {
 
 function buildPlacesCursor(id: string, sortValue: number): string {
   return Buffer.from(JSON.stringify({ id, sortValue })).toString('base64url');
+}
+
+function parsePlaceMediaCursor(cursor: string): { id: string; createdAt: Date } {
+  try {
+    const parsed = JSON.parse(
+      Buffer.from(cursor, 'base64url').toString('utf8'),
+    ) as Partial<PlaceMediaCursorPayload> | null;
+
+    if (
+      !parsed ||
+      typeof parsed !== 'object' ||
+      typeof parsed.id !== 'string' ||
+      parsed.id.length === 0 ||
+      typeof parsed.createdAt !== 'string'
+    ) {
+      throw new ApiError(400, 'Invalid cursor');
+    }
+
+    const createdAt = new Date(parsed.createdAt);
+    if (Number.isNaN(createdAt.getTime())) {
+      throw new ApiError(400, 'Invalid cursor');
+    }
+
+    return { id: parsed.id, createdAt };
+  } catch {
+    throw new ApiError(400, 'Invalid cursor');
+  }
+}
+
+function buildPlaceMediaCursor(id: string, createdAt: Date): string {
+  return Buffer.from(
+    JSON.stringify({
+      id,
+      createdAt: createdAt.toISOString(),
+    }),
+  ).toString('base64url');
 }
 
 function buildPriceRanges(min: number | null, max: number | null): PriceRangeOption[] {
@@ -305,6 +347,36 @@ export async function getById(id: string): Promise<PlaceDetail> {
   };
 
   return placeDetailSchema.parse(detail);
+}
+
+export async function getMediaByPlaceId(
+  placeId: string,
+  query: PlaceMediaQuery,
+): Promise<PlaceMediaResponse> {
+  const exists = await placesRepo.placeExists(placeId);
+  if (!exists) {
+    throw new ApiError(404, 'Place not found');
+  }
+
+  const cursorPayload = query.cursor ? parsePlaceMediaCursor(query.cursor) : null;
+  const rows = await placesRepo.getPlaceMediaPage({
+    placeId,
+    limit: query.limit,
+    ...(cursorPayload
+      ? { cursorCreatedAt: cursorPayload.createdAt, cursorId: cursorPayload.id }
+      : {}),
+  });
+
+  const hasMore = rows.length > query.limit;
+  const page = hasMore ? rows.slice(0, query.limit) : rows;
+
+  const media = page.map((row) => ({ url: row.url, type: row.type }));
+  const nextCursor =
+    hasMore && page.length > 0
+      ? buildPlaceMediaCursor(page[page.length - 1]!.id, page[page.length - 1]!.createdAt)
+      : null;
+
+  return { media, nextCursor };
 }
 
 export async function getSavedPlaceSummariesByIds(ids: string[]): Promise<SavedPlaceSummary[]> {

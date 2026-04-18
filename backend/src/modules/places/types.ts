@@ -127,6 +127,16 @@ export interface PlaceFiltersResponse {
   priceRanges: PriceRangeOption[];
 }
 
+export interface PlaceMediaItem {
+  url: string;
+  type: string | null;
+}
+
+export interface PlaceMediaResponse {
+  media: PlaceMediaItem[];
+  nextCursor: string | null;
+}
+
 export interface PlaceListPageRow {
   placeId: string;
   sortValue: number;

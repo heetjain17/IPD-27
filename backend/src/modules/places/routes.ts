@@ -1,7 +1,12 @@
 import { Router } from 'express';
 import * as placesController from './controller.js';
 import { validate } from '../../middleware/validation.middleware.js';
-import { nearbyQuerySchema, placeIdParamsSchema, placesListQuerySchema } from './schema.js';
+import {
+  nearbyQuerySchema,
+  placeIdParamsSchema,
+  placeMediaQuerySchema,
+  placesListQuerySchema,
+} from './schema.js';
 import { placeReviewsRouter } from '../reviews/routes.js';
 
 const router = Router();
@@ -11,6 +16,11 @@ const router = Router();
 router.get('/', validate({ query: placesListQuerySchema }), placesController.list);
 router.get('/filters', placesController.filters);
 router.get('/nearby', validate({ query: nearbyQuerySchema }), placesController.nearby);
+router.get(
+  '/:id/media',
+  validate({ params: placeIdParamsSchema, query: placeMediaQuerySchema }),
+  placesController.getMedia,
+);
 
 // Nested: GET /api/v1/places/:id/reviews
 router.use('/:id/reviews', placeReviewsRouter);

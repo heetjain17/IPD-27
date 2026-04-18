@@ -208,6 +208,11 @@ export const nearbyQuerySchema = z.object({
   cursor: z.string().min(1).optional(),
 });
 
+export const placeMediaQuerySchema = z.object({
+  limit: z.coerce.number().min(1).max(100).default(20),
+  cursor: z.string().min(1).optional(),
+});
+
 export const placeIdParamsSchema = z.object({
   id: z.uuid(),
 });
@@ -246,4 +251,5 @@ export const placeDetailSchema = z.object({
 
 export type PlacesListQuery = z.infer<typeof placesListQuerySchema>;
 export type NearbyQuery = z.infer<typeof nearbyQuerySchema>;
+export type PlaceMediaQuery = z.infer<typeof placeMediaQuerySchema>;
 export type PlaceIdParams = z.infer<typeof placeIdParamsSchema>;
