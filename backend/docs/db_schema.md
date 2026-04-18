@@ -17,11 +17,15 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 ```sql
 CREATE TABLE users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  auth_id uuid UNIQUE NOT NULL,
   email text UNIQUE NOT NULL,
-  password_hash text NOT NULL,
+  name text,
   created_at timestamptz DEFAULT now() NOT NULL
 );
 ```
+
+`users.auth_id` stores the Supabase Auth user ID.
+Passwords are managed by Supabase Auth and are not stored in `public.users`.
 
 ---
 
@@ -68,6 +72,9 @@ CREATE TABLE places (
   crowd_level_override text,
 
   notes text,
+
+  average_rating double precision DEFAULT 0 NOT NULL,
+  review_count int DEFAULT 0 NOT NULL,
 
   created_by uuid REFERENCES users(id),
   created_at timestamptz DEFAULT now() NOT NULL,
@@ -154,8 +161,24 @@ CREATE INDEX IF NOT EXISTS idx_places_geom ON places USING GIST (geom);
 ```sql
 CREATE INDEX idx_places_category ON places(category);
 CREATE INDEX idx_places_source ON places(source);
+CREATE INDEX idx_places_created_by ON places(created_by);
 CREATE INDEX idx_saved_user ON saved_places(user_id);
 CREATE INDEX idx_reviews_place ON reviews(place_id);
+```
+
+### Recommended follow-up indexes for modular list queries
+
+These are not all mandatory on day one, but they are the most likely candidates once
+`GET /api/v1/places` begins serving combined filter/sort traffic.
+
+```sql
+CREATE INDEX idx_places_area ON places(area);
+CREATE INDEX idx_places_verified ON places(verified);
+CREATE INDEX idx_places_is_hidden_gem ON places(is_hidden_gem);
+CREATE INDEX idx_places_priority_score ON places(priority_score);
+CREATE INDEX idx_places_average_rating ON places(average_rating);
+CREATE INDEX idx_places_created_at ON places(created_at);
+CREATE INDEX idx_place_tags_tag_id ON place_tags(tag_id);
 ```
 
 ---
@@ -209,10 +232,52 @@ place_media
 - save/bookmark
 - add media
 - add reviews
+- sort by cached rating efficiently
+- support controlled universal list queries without exposing arbitrary DB fields
 
 ---
 
-# 12) What you intentionally skipped (correctly)
+# 12) Query model mapping for `GET /api/v1/places`
+
+This section maps the public query API to actual schema columns so filtering and
+sorting stay controlled.
+
+## Filterable columns
+
+- `category` -> `places.category`
+- `area` -> `places.area`
+- `verified` -> `places.verified`
+- `isHiddenGem` -> `places.is_hidden_gem`
+- `minPrice` / `maxPrice` -> `places.avg_cost_for_two`
+- `tags` -> `tags.name` through `place_tags`
+
+## Searchable columns (V1)
+
+- `places.name`
+- `places.description`
+- `places.area`
+
+V1 search uses case-insensitive partial matching (`ILIKE`).
+
+## Supported list sorts (V1)
+
+- `distance` -> PostGIS distance from `places.geom`
+- `rating` -> `places.average_rating`
+- `newest` -> `places.created_at`
+- `price_low` / `price_high` -> `places.avg_cost_for_two`
+- `priority` -> controlled app ordering backed by stored place fields, primarily `places.priority_score`
+
+`rating` is efficient because `average_rating` is cached on `places` and synced by trigger.
+
+## Notes on geo queries
+
+- Geo filtering and distance sorting depend on `places.geom`.
+- `ST_MakePoint` always takes `(lng, lat)`.
+- Distance is measured in metres because `geom` is stored as `geography(Point, 4326)`.
+
+---
+
+# 13) What you intentionally skipped (correctly)
 
 - no JSON fields
 - no over-engineering
@@ -222,7 +287,7 @@ place_media
 
 ---
 
-# 13) Known limitations (acceptable for V1)
+# 14) Known limitations (acceptable for V1)
 
 - opening_hours is raw text
 - no crowd/activity tracking
@@ -233,7 +298,7 @@ All of these can be added later **without breaking schema**.
 
 ---
 
-# 14) Drizzle ORM Walkthrough
+# 15) Drizzle ORM Walkthrough
 
 This section explains how the SQL schema above maps to our Drizzle ORM implementation in `src/db/schema.ts`.
 

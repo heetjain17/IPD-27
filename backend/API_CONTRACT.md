@@ -308,17 +308,82 @@ Set-Cookie: refreshToken=<new-token>; HttpOnly; Secure; SameSite=Strict; Max-Age
 
 # 3) Places API
 
-## GET /api/v1/places/nearby
+## GET /api/v1/places
 
 ### Query Params
 
 ```text
-lat: number
-lng: number
-radius: number (meters, min 1, max 50000)
+lat: number (optional, must be paired with lng)
+lng: number (optional, must be paired with lat)
+radius: number (meters, optional, default 5000, clamped max 50000)
+
+category: string (optional)
+area: string (optional)
+verified: boolean (optional)
+isHiddenGem: boolean (optional)
+minPrice: number (optional)
+maxPrice: number (optional)
+
+tags: comma-separated string (optional)
+tagsMode: all | any (optional, default any)
+
+q: string (optional)
+
+sort: distance | rating | newest | price_low | price_high | priority (optional)
+order: asc | desc (optional)
+
 limit: number (default 20, max 100)
-cursor: string (optional)
+cursor: string (optional, keyset pagination)
+
+fields: basic | card | full (optional, default card)
+include: comma-separated string (optional, allowed: media, tags; max 2)
 ```
+
+### Query Rules
+
+- `lat` and `lng` must be provided together. If only one is present, return `400 Bad Request`.
+- If `lat/lng` are missing, geo distance is not computed and geo sorting is not applied.
+- If `lat/lng` are present and `sort` is omitted, default sort is `distance`.
+- If `lat/lng` are absent and `sort` is omitted, default sort is `priority`.
+- `radius` defaults to `5000` metres.
+- `radius > 50000` is clamped to `50000`.
+- `radius < 1` falls back to the default.
+- All filters are AND-based.
+- `tagsMode=all` means a place must match all provided tags.
+- `tagsMode=any` means a place may match any provided tag.
+- Unknown tags are ignored.
+- `q` is applied using case-insensitive partial matching on `name`, `description`, and `area` in V1.
+- Only whitelisted sort values are accepted.
+- `cursor` is keyset-based and tied to the active sort key plus `id` as a stable tie-breaker.
+- `include` is intentionally limited in V1 to avoid heavy list queries.
+
+### Field Presets
+
+#### `basic`
+
+- `id`
+- `name`
+- `lat`
+- `lng`
+
+#### `card` (default)
+
+- `id`
+- `name`
+- `lat`
+- `lng`
+- `category`
+- `address`
+- `area`
+- `thumbnail`
+- `tags`
+- `distance` when geo is enabled
+
+#### `full`
+
+- includes all non-heavy list-safe place fields
+- excludes heavy relations by default
+- relation data is still controlled by `include`
 
 ### Response (200 OK)
 
@@ -326,7 +391,7 @@ cursor: string (optional)
 {
   "success": true,
   "statusCode": 200,
-  "message": "Nearby places retrieved",
+  "message": "Places retrieved",
   "data": {
     "places": [
       {
@@ -362,8 +427,62 @@ cursor: string (optional)
 ### Notes
 
 - Public endpoint
-- `distance` is computed by Location module (metres)
-- Uses keyset pagination cursor
+- `distance` is returned only when geo inputs are present
+- Uses keyset pagination cursor only; offset pagination is not supported
+- Reviews are not joined into list results in V1
+- Includes are controlled and limited to prevent overfetching
+
+### Empty Results
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Places retrieved",
+  "data": {
+    "places": [],
+    "nextCursor": null
+  }
+}
+```
+
+### Errors
+
+- `400 Bad Request` - Invalid query combination or unsupported query value
+
+---
+
+## GET /api/v1/places/filters
+
+Returns metadata for building client-side filter UIs.
+
+### Response (200 OK)
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Place filters retrieved",
+  "data": {
+    "categories": ["food", "cafe"],
+    "areas": ["juhu", "bandra"],
+    "tags": ["coffee", "wifi"],
+    "priceRanges": [
+      {
+        "key": "budget",
+        "min": 0,
+        "max": 500
+      }
+    ]
+  }
+}
+```
+
+### Notes
+
+- Public endpoint
+- Intended for filter metadata only
+- Keeps mobile clients from hardcoding categories, tags, or area options
 
 ---
 
@@ -415,6 +534,44 @@ cursor: string (optional)
 - Public endpoint
 - `averageRating` and `reviewCount` are cached columns on `places`
 - Cached values are kept in sync by Postgres trigger on `reviews`
+- This is the primary full-detail endpoint for a single place
+- Returns tags, limited media, and rating summary
+
+---
+
+## GET /api/v1/places/:id/media
+
+### Query Params
+
+```text
+limit: number (default 20, max 100)
+cursor: string (optional)
+```
+
+### Response (200 OK)
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Place media retrieved",
+  "data": {
+    "media": [
+      {
+        "url": "https://...",
+        "type": "image"
+      }
+    ],
+    "nextCursor": "base64url-cursor-or-null"
+  }
+}
+```
+
+### Notes
+
+- Public endpoint
+- Dedicated media endpoint prevents unbounded media payloads in list and detail responses
+- Uses cursor pagination
 
 ---
 
@@ -676,8 +833,10 @@ DATABASE_URL=postgresql://...
 
 ### Places
 
-- `GET /api/v1/places/nearby`
+- `GET /api/v1/places`
+- `GET /api/v1/places/filters`
 - `GET /api/v1/places/:id`
+- `GET /api/v1/places/:id/media`
 - `GET /api/v1/places/:id/reviews`
 
 ### Saved Places
@@ -697,5 +856,9 @@ DATABASE_URL=postgresql://...
 ### System
 
 - `GET /health`
+
+### Transitional note
+
+- `GET /api/v1/places/nearby` may be retained temporarily as a backward-compatibility route during rollout, but `GET /api/v1/places` is the primary V1 list endpoint going forward.
 
 ---
