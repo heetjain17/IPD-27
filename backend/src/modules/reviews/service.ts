@@ -107,9 +107,9 @@ export async function getReviewsByPlace(
   let nextCursor: string | null = null;
   if (hasMore && pageRows.length > 0) {
     const last = pageRows[pageRows.length - 1]!;
-    nextCursor = Buffer.from(
-      JSON.stringify({ ts: last.createdAt, id: last.id }),
-    ).toString('base64url');
+    nextCursor = Buffer.from(JSON.stringify({ ts: last.createdAt, id: last.id })).toString(
+      'base64url',
+    );
   }
 
   return { reviews: pageRows, nextCursor };

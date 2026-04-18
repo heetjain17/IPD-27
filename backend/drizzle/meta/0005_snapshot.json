@@ -1,6 +1,6 @@
 {
-  "id": "4b1a9149-6d0c-431e-9428-6f813f74e5f6",
-  "prevId": "ae46435e-1e51-44ba-b4af-bb49210ab256",
+  "id": "59294847-63aa-4568-a957-fdd6eb5f508a",
+  "prevId": "4b1a9149-6d0c-431e-9428-6f813f74e5f6",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -237,6 +237,63 @@
           "primaryKey": false,
           "notNull": true,
           "default": true
+        },
+        "custom_description": {
+          "name": "custom_description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "vibe": {
+          "name": "vibe",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_hidden_gem": {
+          "name": "is_hidden_gem",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "priority_score": {
+          "name": "priority_score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "verified": {
+          "name": "verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "best_time_to_visit": {
+          "name": "best_time_to_visit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avg_cost_for_two": {
+          "name": "avg_cost_for_two",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "crowd_level_override": {
+          "name": "crowd_level_override",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "average_rating": {
           "name": "average_rating",

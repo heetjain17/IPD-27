@@ -69,6 +69,21 @@ export const places = pgTable(
     lastSyncedAt: timestamp('last_synced_at', { withTimezone: true }),
     isActive: boolean('is_active').default(true).notNull(),
 
+    // Proprietary curation fields
+    customDescription: text('custom_description'),
+    vibe: text('vibe'),
+    isHiddenGem: boolean('is_hidden_gem').default(false).notNull(),
+    priorityScore: integer('priority_score').default(0).notNull(),
+    verified: boolean('verified').default(false).notNull(),
+
+    // Contextual intelligence fields
+    bestTimeToVisit: text('best_time_to_visit'),
+    avgCostForTwo: integer('avg_cost_for_two'),
+    crowdLevelOverride: text('crowd_level_override'),
+
+    // Internal notes
+    notes: text('notes'),
+
     // Cached rating data (updated via trigger)
     averageRating: doublePrecision('average_rating').default(0).notNull(),
     reviewCount: integer('review_count').default(0).notNull(),

@@ -11,6 +11,15 @@ export interface PlaceSummary {
   area: string | null;
   lastSyncedAt: string | null;
   isActive: boolean;
+  customDescription: string | null;
+  vibe: string | null;
+  isHiddenGem: boolean;
+  priorityScore: number;
+  verified: boolean;
+  bestTimeToVisit: string | null;
+  avgCostForTwo: number | null;
+  crowdLevelOverride: string | null;
+  notes: string | null;
   distance: number; // metres, computed by Location module
   tags: string[];
   thumbnail: string | null; // first image URL, null if no media
@@ -27,6 +36,15 @@ export interface SavedPlaceSummary {
   area: string | null;
   lastSyncedAt: string | null;
   isActive: boolean;
+  customDescription: string | null;
+  vibe: string | null;
+  isHiddenGem: boolean;
+  priorityScore: number;
+  verified: boolean;
+  bestTimeToVisit: string | null;
+  avgCostForTwo: number | null;
+  crowdLevelOverride: string | null;
+  notes: string | null;
   tags: string[];
   thumbnail: string | null;
 }
@@ -43,6 +61,15 @@ export interface PlaceDetail {
   area: string | null;
   lastSyncedAt: string | null;
   isActive: boolean;
+  customDescription: string | null;
+  vibe: string | null;
+  isHiddenGem: boolean;
+  priorityScore: number;
+  verified: boolean;
+  bestTimeToVisit: string | null;
+  avgCostForTwo: number | null;
+  crowdLevelOverride: string | null;
+  notes: string | null;
   averageRating: number;
   reviewCount: number;
   tags: string[];
@@ -67,6 +94,15 @@ export interface PlaceRow {
   area: string | null;
   lastSyncedAt: Date | null;
   isActive: boolean;
+  customDescription: string | null;
+  vibe: string | null;
+  isHiddenGem: boolean;
+  priorityScore: number;
+  verified: boolean;
+  bestTimeToVisit: string | null;
+  avgCostForTwo: number | null;
+  crowdLevelOverride: string | null;
+  notes: string | null;
   averageRating: number;
   reviewCount: number;
 }

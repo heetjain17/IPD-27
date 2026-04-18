@@ -57,6 +57,18 @@ CREATE TABLE places (
   last_synced_at timestamptz,
   is_active boolean DEFAULT true NOT NULL,
 
+  custom_description text,
+  vibe text,
+  is_hidden_gem boolean DEFAULT false NOT NULL,
+  priority_score int DEFAULT 0 NOT NULL,
+  verified boolean DEFAULT false NOT NULL,
+
+  best_time_to_visit text,
+  avg_cost_for_two int,
+  crowd_level_override text,
+
+  notes text,
+
   created_by uuid REFERENCES users(id),
   created_at timestamptz DEFAULT now() NOT NULL,
   updated_at timestamptz DEFAULT now() NOT NULL

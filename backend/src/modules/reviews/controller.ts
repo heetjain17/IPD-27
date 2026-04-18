@@ -3,7 +3,11 @@ import type { AuthenticatedRequest } from '../../types/auth.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { apiSuccess } from '../../utils/apiSuccess.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import type { CreateReviewBodyInput, ReviewsQueryInput, ReviewsPlaceParamsInput } from './schema.js';
+import type {
+  CreateReviewBodyInput,
+  ReviewsQueryInput,
+  ReviewsPlaceParamsInput,
+} from './schema.js';
 import * as reviewsService from './service.js';
 
 /**

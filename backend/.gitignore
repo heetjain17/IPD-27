@@ -1,3 +1,7 @@
 node_modules/
 .env
 .env.*
+
+data-scripts/xlsxData/
+data-scripts/processedData/
+data-scripts/rawData/
