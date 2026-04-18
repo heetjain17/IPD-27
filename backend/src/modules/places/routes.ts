@@ -9,6 +9,7 @@ const router = Router();
 // IMPORTANT: static routes MUST be registered before /:id
 // Otherwise Express matches 'nearby' and 'saved' as ID params.
 router.get('/', validate({ query: placesListQuerySchema }), placesController.list);
+router.get('/filters', placesController.filters);
 router.get('/nearby', validate({ query: nearbyQuerySchema }), placesController.nearby);
 
 // Nested: GET /api/v1/places/:id/reviews

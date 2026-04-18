@@ -15,6 +15,11 @@ export const list = asyncHandler(async (req: Request, res: Response) => {
   return res.json(apiSuccess(200, 'Places retrieved', result));
 });
 
+export const filters = asyncHandler(async (_req: Request, res: Response) => {
+  const result = await placesService.getPlaceFilters();
+  return res.json(apiSuccess(200, 'Place filters retrieved', result));
+});
+
 /**
  * GET /api/v1/places/nearby?lat=&lng=&radius=&limit=&cursor=
  *

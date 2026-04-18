@@ -114,6 +114,19 @@ export interface PlacesListResponse {
   nextCursor: string | null;
 }
 
+export interface PriceRangeOption {
+  key: string;
+  min: number;
+  max: number;
+}
+
+export interface PlaceFiltersResponse {
+  categories: string[];
+  areas: string[];
+  tags: string[];
+  priceRanges: PriceRangeOption[];
+}
+
 export interface PlaceListPageRow {
   placeId: string;
   sortValue: number;

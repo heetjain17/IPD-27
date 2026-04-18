@@ -6,8 +6,10 @@ import type { NearbyQuery, PlacesListQuery } from './schema.js';
 import type {
   NearbyResponse,
   PlaceDetail,
+  PlaceFiltersResponse,
   PlaceListItem,
   PlaceSummary,
+  PriceRangeOption,
   PlacesListResponse,
   SavedPlaceSummary,
 } from './types.js';
@@ -42,6 +44,19 @@ function parsePlacesCursor(cursor: string): PlacesCursorPayload {
 
 function buildPlacesCursor(id: string, sortValue: number): string {
   return Buffer.from(JSON.stringify({ id, sortValue })).toString('base64url');
+}
+
+function buildPriceRanges(min: number | null, max: number | null): PriceRangeOption[] {
+  if (min === null || max === null) {
+    return [];
+  }
+
+  return [
+    { key: 'budget', min: 0, max: 500 },
+    { key: 'mid', min: 501, max: 1000 },
+    { key: 'premium', min: 1001, max: 2000 },
+    { key: 'luxury', min: 2001, max: Math.max(2001, max) },
+  ].filter((range) => range.max >= min && range.min <= max);
 }
 
 function toPlaceListItem(
@@ -155,6 +170,22 @@ export async function listPlaces(query: PlacesListQuery): Promise<PlacesListResp
   }
 
   return { places, nextCursor };
+}
+
+export async function getPlaceFilters(): Promise<PlaceFiltersResponse> {
+  const [categories, areas, tags, priceStats] = await Promise.all([
+    placesRepo.getFilterCategories(),
+    placesRepo.getFilterAreas(),
+    placesRepo.getFilterTags(),
+    placesRepo.getPriceStats(),
+  ]);
+
+  return {
+    categories,
+    areas,
+    tags,
+    priceRanges: buildPriceRanges(priceStats.min, priceStats.max),
+  };
 }
 
 /**

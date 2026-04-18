@@ -482,6 +482,8 @@ Returns metadata for building client-side filter UIs.
 
 - Public endpoint
 - Intended for filter metadata only
+- `categories`, `areas`, and `priceRanges` are derived from active places only (`is_active = true`)
+- `tags` include only values linked to at least one active place
 - Keeps mobile clients from hardcoding categories, tags, or area options
 
 ---

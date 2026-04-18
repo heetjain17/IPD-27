@@ -101,6 +101,53 @@ export async function getExistingTagNames(names: string[]): Promise<string[]> {
   return rows.map((row) => row.name);
 }
 
+export async function getFilterCategories(): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ category: places.category })
+    .from(places)
+    .where(eq(places.isActive, true))
+    .orderBy(asc(places.category));
+
+  return rows.map((row) => row.category);
+}
+
+export async function getFilterAreas(): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ area: places.area })
+    .from(places)
+    .where(sql`${places.isActive} = true AND ${places.area} IS NOT NULL`)
+    .orderBy(asc(places.area));
+
+  return rows.map((row) => row.area).filter((area): area is string => area !== null);
+}
+
+export async function getFilterTags(): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ name: tags.name })
+    .from(tags)
+    .innerJoin(placeTags, eq(placeTags.tagId, tags.id))
+    .innerJoin(places, eq(placeTags.placeId, places.id))
+    .where(eq(places.isActive, true))
+    .orderBy(asc(tags.name));
+
+  return rows.map((row) => row.name);
+}
+
+export async function getPriceStats(): Promise<{ min: number | null; max: number | null }> {
+  const [row] = await db
+    .select({
+      min: sql<number | null>`MIN(${places.avgCostForTwo})`,
+      max: sql<number | null>`MAX(${places.avgCostForTwo})`,
+    })
+    .from(places)
+    .where(sql`${places.isActive} = true AND ${places.avgCostForTwo} IS NOT NULL`);
+
+  return {
+    min: row?.min ?? null,
+    max: row?.max ?? null,
+  };
+}
+
 export async function getPlacesPage(params: GetPlacesPageParams): Promise<PlaceListPageRow[]> {
   const {
     lat,
