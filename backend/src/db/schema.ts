@@ -5,6 +5,7 @@ import {
   timestamp,
   doublePrecision,
   integer,
+  boolean,
   primaryKey,
   index,
   uniqueIndex,
@@ -58,10 +59,15 @@ export const places = pgTable(
     externalId: text('external_id'),
 
     // Place details
+    address: text('address'),
+    googleTypes: text('google_types').array(),
+    area: text('area'),
     openingHours: text('opening_hours'),
     contactPhone: text('contact_phone'),
     websiteUrl: text('website_url'),
     priceLevel: integer('price_level'),
+    lastSyncedAt: timestamp('last_synced_at', { withTimezone: true }),
+    isActive: boolean('is_active').default(true).notNull(),
 
     // Cached rating data (updated via trigger)
     averageRating: doublePrecision('average_rating').default(0).notNull(),

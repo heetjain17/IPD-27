@@ -46,10 +46,16 @@ CREATE TABLE places (
   source place_source NOT NULL,
   external_id text,
 
+  address text,
+  google_types text[],
+  area text,
+
   opening_hours text,
   contact_phone text,
   website_url text,
   price_level int,
+  last_synced_at timestamptz,
+  is_active boolean DEFAULT true NOT NULL,
 
   created_by uuid REFERENCES users(id),
   created_at timestamptz DEFAULT now() NOT NULL,
