@@ -1,0 +1,4204 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Tourism Backend API",
+    "version": "1.0.0",
+    "description": "Machine-readable API contract. Step 1 includes shared metadata/components only; path registration follows in later steps."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Current API server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "auth"
+    },
+    {
+      "name": "places"
+    },
+    {
+      "name": "saved-places"
+    },
+    {
+      "name": "reviews"
+    },
+    {
+      "name": "tags"
+    },
+    {
+      "name": "health"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ApiSuccessEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "message": {
+            "type": "string",
+            "example": "Request successful"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "success",
+          "statusCode",
+          "message"
+        ]
+      },
+      "ApiErrorEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "statusCode": {
+            "type": "number",
+            "example": 400
+          },
+          "message": {
+            "type": "string",
+            "example": "Validation failed"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "success",
+          "statusCode",
+          "message"
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "Service and DB are healthy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "ok"
+                          ]
+                        },
+                        "db": {
+                          "type": "string",
+                          "enum": [
+                            "connected"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "db"
+                      ]
+                    },
+                    "error": {
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "DB_UNREACHABLE"
+                          ]
+                        },
+                        "message": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Register a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "email": {
+                              "type": "string",
+                              "format": "email"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "createdAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "email",
+                            "createdAt"
+                          ]
+                        },
+                        "session": {
+                          "type": "object",
+                          "properties": {
+                            "accessToken": {
+                              "type": "string"
+                            },
+                            "refreshToken": {
+                              "type": "string"
+                            },
+                            "expiresIn": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "accessToken",
+                            "refreshToken",
+                            "expiresIn"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "user",
+                        "session"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "User already exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login with email and password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "email": {
+                              "type": "string",
+                              "format": "email"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "createdAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "email",
+                            "createdAt"
+                          ]
+                        },
+                        "session": {
+                          "type": "object",
+                          "properties": {
+                            "accessToken": {
+                              "type": "string"
+                            },
+                            "refreshToken": {
+                              "type": "string"
+                            },
+                            "expiresIn": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "accessToken",
+                            "refreshToken",
+                            "expiresIn"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "user",
+                        "session"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User profile not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Logout current session",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Logged out successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Get current authenticated user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current user retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "createdAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Refresh access token using refresh cookie",
+        "description": "Uses refresh token from cookie and rotates session tokens.",
+        "responses": {
+          "200": {
+            "description": "Token refreshed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "email": {
+                              "type": "string",
+                              "format": "email"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "createdAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "email",
+                            "createdAt"
+                          ]
+                        },
+                        "session": {
+                          "type": "object",
+                          "properties": {
+                            "accessToken": {
+                              "type": "string"
+                            },
+                            "refreshToken": {
+                              "type": "string"
+                            },
+                            "expiresIn": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "accessToken",
+                            "refreshToken",
+                            "expiresIn"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "user",
+                        "session"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No refresh token or invalid refresh token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User profile not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/places": {
+      "get": {
+        "tags": [
+          "places"
+        ],
+        "summary": "Universal places list endpoint",
+        "description": "Supports controlled filtering, search, sorting, and cursor pagination. Cursor key is based on active sort key plus id tie-breaker.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "number",
+              "nullable": true,
+              "minimum": -90,
+              "maximum": 90
+            },
+            "required": false,
+            "name": "lat",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "nullable": true,
+              "minimum": -180,
+              "maximum": 180
+            },
+            "required": false,
+            "name": "lng",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 50000
+            },
+            "required": false,
+            "name": "radius",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": false,
+            "name": "category",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": false,
+            "name": "area",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "required": false,
+            "name": "verified",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "required": false,
+            "name": "isHiddenGem",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "nullable": true
+            },
+            "required": false,
+            "name": "minPrice",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "nullable": true
+            },
+            "required": false,
+            "name": "maxPrice",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "tags",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "any"
+              ]
+            },
+            "required": false,
+            "name": "tagsMode",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": false,
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "distance",
+                "rating",
+                "newest",
+                "price_low",
+                "price_high",
+                "priority"
+              ]
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            },
+            "required": false,
+            "name": "order",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "basic",
+                "card",
+                "full"
+              ]
+            },
+            "required": false,
+            "name": "fields",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "include",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Places retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "places": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "lat": {
+                                "type": "number"
+                              },
+                              "lng": {
+                                "type": "number"
+                              },
+                              "category": {
+                                "type": "string"
+                              },
+                              "address": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "googleTypes": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "area": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "lastSyncedAt": {
+                                "type": "string",
+                                "nullable": true,
+                                "format": "date-time"
+                              },
+                              "isActive": {
+                                "type": "boolean"
+                              },
+                              "customDescription": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "vibe": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "isHiddenGem": {
+                                "type": "boolean"
+                              },
+                              "priorityScore": {
+                                "type": "number"
+                              },
+                              "verified": {
+                                "type": "boolean"
+                              },
+                              "bestTimeToVisit": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "avgCostForTwo": {
+                                "type": "number",
+                                "nullable": true
+                              },
+                              "crowdLevelOverride": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "averageRating": {
+                                "type": "number"
+                              },
+                              "reviewCount": {
+                                "type": "integer"
+                              },
+                              "distance": {
+                                "type": "number"
+                              },
+                              "tags": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "thumbnail": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "media": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "url": {
+                                      "type": "string"
+                                    },
+                                    "type": {
+                                      "type": "string",
+                                      "nullable": true
+                                    }
+                                  },
+                                  "required": [
+                                    "url",
+                                    "type"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "lat",
+                              "lng"
+                            ]
+                          }
+                        },
+                        "nextCursor": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "places",
+                        "nextCursor"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query combination or unsupported value.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/places/filters": {
+      "get": {
+        "tags": [
+          "places"
+        ],
+        "summary": "Fetch filter metadata for places",
+        "responses": {
+          "200": {
+            "description": "Filter metadata retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "categories": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "areas": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "priceRanges": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "min": {
+                                "type": "number"
+                              },
+                              "max": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "min",
+                              "max"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "categories",
+                        "areas",
+                        "tags",
+                        "priceRanges"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/places/nearby": {
+      "get": {
+        "tags": [
+          "places"
+        ],
+        "summary": "Legacy nearby places endpoint",
+        "description": "Distance-based endpoint retained for transition. Uses cursor pagination ordered by distance, id.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "number",
+              "nullable": true,
+              "minimum": -90,
+              "maximum": 90
+            },
+            "required": false,
+            "name": "lat",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "nullable": true,
+              "minimum": -180,
+              "maximum": 180
+            },
+            "required": false,
+            "name": "lng",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 50000
+            },
+            "required": true,
+            "name": "radius",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Nearby places retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "places": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "lat": {
+                                "type": "number"
+                              },
+                              "lng": {
+                                "type": "number"
+                              },
+                              "category": {
+                                "type": "string"
+                              },
+                              "address": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "googleTypes": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "area": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "lastSyncedAt": {
+                                "type": "string",
+                                "nullable": true,
+                                "format": "date-time"
+                              },
+                              "isActive": {
+                                "type": "boolean"
+                              },
+                              "customDescription": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "vibe": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "isHiddenGem": {
+                                "type": "boolean"
+                              },
+                              "priorityScore": {
+                                "type": "number"
+                              },
+                              "verified": {
+                                "type": "boolean"
+                              },
+                              "bestTimeToVisit": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "avgCostForTwo": {
+                                "type": "number",
+                                "nullable": true
+                              },
+                              "crowdLevelOverride": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "averageRating": {
+                                "type": "number"
+                              },
+                              "reviewCount": {
+                                "type": "integer"
+                              },
+                              "distance": {
+                                "type": "number"
+                              },
+                              "tags": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "thumbnail": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "media": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "url": {
+                                      "type": "string"
+                                    },
+                                    "type": {
+                                      "type": "string",
+                                      "nullable": true
+                                    }
+                                  },
+                                  "required": [
+                                    "url",
+                                    "type"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "lat",
+                              "lng"
+                            ]
+                          }
+                        },
+                        "nextCursor": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "places",
+                        "nextCursor"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameters.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/places/{id}": {
+      "get": {
+        "tags": [
+          "places"
+        ],
+        "summary": "Get place detail by id",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Place detail retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "lat": {
+                          "type": "number"
+                        },
+                        "lng": {
+                          "type": "number"
+                        },
+                        "category": {
+                          "type": "string"
+                        },
+                        "address": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "googleTypes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "area": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "lastSyncedAt": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "isActive": {
+                          "type": "boolean"
+                        },
+                        "customDescription": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "vibe": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "isHiddenGem": {
+                          "type": "boolean"
+                        },
+                        "priorityScore": {
+                          "type": "integer"
+                        },
+                        "verified": {
+                          "type": "boolean"
+                        },
+                        "bestTimeToVisit": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "avgCostForTwo": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "crowdLevelOverride": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "notes": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "averageRating": {
+                          "type": "number"
+                        },
+                        "reviewCount": {
+                          "type": "integer"
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "media": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "url": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            },
+                            "required": [
+                              "url",
+                              "type"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "description",
+                        "lat",
+                        "lng",
+                        "category",
+                        "address",
+                        "googleTypes",
+                        "area",
+                        "lastSyncedAt",
+                        "isActive",
+                        "customDescription",
+                        "vibe",
+                        "isHiddenGem",
+                        "priorityScore",
+                        "verified",
+                        "bestTimeToVisit",
+                        "avgCostForTwo",
+                        "crowdLevelOverride",
+                        "notes",
+                        "averageRating",
+                        "reviewCount",
+                        "tags",
+                        "media"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid place id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Place not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/places/{id}/media": {
+      "get": {
+        "tags": [
+          "places"
+        ],
+        "summary": "Get paginated place media",
+        "description": "Cursor pagination ordered by createdAt ASC, id ASC.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Place media retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "media": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "url": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            },
+                            "required": [
+                              "url",
+                              "type"
+                            ]
+                          }
+                        },
+                        "nextCursor": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "media",
+                        "nextCursor"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid limit or cursor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Place not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/places/{id}/reviews": {
+      "get": {
+        "tags": [
+          "reviews"
+        ],
+        "summary": "Get paginated reviews for a place",
+        "description": "Cursor pagination uses keyset ordering on createdAt DESC, id DESC.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reviews retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "reviews": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "placeId": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "userId": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "rating": {
+                                "type": "number"
+                              },
+                              "comment": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "createdAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "placeId",
+                              "userId",
+                              "rating",
+                              "comment",
+                              "createdAt"
+                            ]
+                          }
+                        },
+                        "nextCursor": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "reviews",
+                        "nextCursor"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameters.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Place not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/places/save": {
+      "post": {
+        "tags": [
+          "saved-places"
+        ],
+        "summary": "Save a place for current user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "placeId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                "required": [
+                  "placeId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Place saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "saved": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        }
+                      },
+                      "required": [
+                        "saved"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Place not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Place already saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/places/save/{placeId}": {
+      "delete": {
+        "tags": [
+          "saved-places"
+        ],
+        "summary": "Delete saved place for current user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "placeId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Saved place removed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "saved": {
+                          "type": "boolean",
+                          "enum": [
+                            false
+                          ]
+                        }
+                      },
+                      "required": [
+                        "saved"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid placeId.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Saved place not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/places/saved": {
+      "get": {
+        "tags": [
+          "saved-places"
+        ],
+        "summary": "Get paginated saved places for current user",
+        "description": "Cursor pagination uses keyset ordering on saved timestamp, placeId.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Saved places retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "places": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "lat": {
+                                "type": "number"
+                              },
+                              "lng": {
+                                "type": "number"
+                              },
+                              "category": {
+                                "type": "string"
+                              },
+                              "address": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "googleTypes": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "area": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "lastSyncedAt": {
+                                "type": "string",
+                                "nullable": true,
+                                "format": "date-time"
+                              },
+                              "isActive": {
+                                "type": "boolean"
+                              },
+                              "customDescription": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "vibe": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "isHiddenGem": {
+                                "type": "boolean"
+                              },
+                              "priorityScore": {
+                                "type": "integer"
+                              },
+                              "verified": {
+                                "type": "boolean"
+                              },
+                              "bestTimeToVisit": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "avgCostForTwo": {
+                                "type": "number",
+                                "nullable": true
+                              },
+                              "crowdLevelOverride": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "tags": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "thumbnail": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "lat",
+                              "lng",
+                              "category",
+                              "address",
+                              "googleTypes",
+                              "area",
+                              "lastSyncedAt",
+                              "isActive",
+                              "customDescription",
+                              "vibe",
+                              "isHiddenGem",
+                              "priorityScore",
+                              "verified",
+                              "bestTimeToVisit",
+                              "avgCostForTwo",
+                              "crowdLevelOverride",
+                              "notes",
+                              "tags",
+                              "thumbnail"
+                            ]
+                          }
+                        },
+                        "nextCursor": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "places",
+                        "nextCursor"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid limit or cursor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reviews": {
+      "post": {
+        "tags": [
+          "reviews"
+        ],
+        "summary": "Create a review",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "placeId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "rating": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "comment": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000
+                  }
+                },
+                "required": [
+                  "placeId",
+                  "rating"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Review created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "review": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "placeId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "userId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "rating": {
+                              "type": "number"
+                            },
+                            "comment": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "createdAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "placeId",
+                            "userId",
+                            "rating",
+                            "comment",
+                            "createdAt"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "review"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid review payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Place not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tags": {
+      "get": {
+        "tags": [
+          "tags"
+        ],
+        "summary": "Get all tags",
+        "responses": {
+          "200": {
+            "description": "Tags retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "statusCode": {
+                      "type": "number"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "tags"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "statusCode",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

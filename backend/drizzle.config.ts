@@ -1,4 +1,3 @@
-import type { Config } from 'drizzle-kit';
 import 'dotenv/config';
 
 export default {
@@ -10,4 +9,4 @@ export default {
     ssl: true,
   },
   tablesFilter: ['!spatial_ref_sys', '!geography_columns', '!geometry_columns'],
-} satisfies Config;
+};

@@ -14,6 +14,7 @@ import placesRoutes from './modules/places/routes.js';
 import savedPlacesRoutes from './modules/saved-places/routes.js';
 import reviewsRoutes from './modules/reviews/routes.js';
 import tagsRoutes from './modules/tags/routes.js';
+import { mountOpenApiRoutes } from './openapi/routes.js';
 
 const PORT = getEnv('PORT');
 // const FRONTEND_URL = getEnv('FRONTEND_URL');
@@ -57,6 +58,9 @@ app.get('/health', async (_req, res) => {
   }
 });
 
+// OpenAPI: raw spec is always available; interactive docs are non-production only.
+mountOpenApiRoutes(app);
+
 // Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/places', savedPlacesRoutes);
@@ -86,6 +90,7 @@ async function startServer(): Promise<void> {
     await verifyDatabase();
     app.listen(PORT, () => {
       console.log(`✓ Server running on http://localhost:${PORT}`);
+      console.log(`✓ Docs on http://localhost:${PORT}/docs`);
     });
   } catch (error) {
     console.error('✗ Failed to start server:', error);
