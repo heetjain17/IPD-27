@@ -23,6 +23,11 @@ export async function getPlacesByIds(ids: string[]): Promise<PlaceWithEnrichment
       lat: places.lat,
       lng: places.lng,
       category: places.category,
+      address: places.address,
+      googleTypes: places.googleTypes,
+      area: places.area,
+      lastSyncedAt: places.lastSyncedAt,
+      isActive: places.isActive,
       averageRating: places.averageRating,
       reviewCount: places.reviewCount,
     })

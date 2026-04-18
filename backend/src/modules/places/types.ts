@@ -6,6 +6,11 @@ export interface PlaceSummary {
   lat: number;
   lng: number;
   category: string;
+  address: string | null;
+  googleTypes: string[];
+  area: string | null;
+  lastSyncedAt: string | null;
+  isActive: boolean;
   distance: number; // metres, computed by Location module
   tags: string[];
   thumbnail: string | null; // first image URL, null if no media
@@ -17,6 +22,11 @@ export interface SavedPlaceSummary {
   lat: number;
   lng: number;
   category: string;
+  address: string | null;
+  googleTypes: string[];
+  area: string | null;
+  lastSyncedAt: string | null;
+  isActive: boolean;
   tags: string[];
   thumbnail: string | null;
 }
@@ -28,6 +38,11 @@ export interface PlaceDetail {
   lat: number;
   lng: number;
   category: string;
+  address: string | null;
+  googleTypes: string[];
+  area: string | null;
+  lastSyncedAt: string | null;
+  isActive: boolean;
   averageRating: number;
   reviewCount: number;
   tags: string[];
@@ -47,6 +62,11 @@ export interface PlaceRow {
   lat: number;
   lng: number;
   category: string;
+  address: string | null;
+  googleTypes: string[] | null;
+  area: string | null;
+  lastSyncedAt: Date | null;
+  isActive: boolean;
   averageRating: number;
   reviewCount: number;
 }

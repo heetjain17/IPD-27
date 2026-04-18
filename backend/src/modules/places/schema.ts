@@ -13,16 +13,21 @@ export const nearbyQuerySchema = z.object({
 });
 
 export const placeIdParamsSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
 });
 
 export const placeDetailSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   name: z.string(),
   description: z.string().nullable(),
   lat: z.number(),
   lng: z.number(),
   category: z.string(),
+  address: z.string().nullable(),
+  googleTypes: z.array(z.string()),
+  area: z.string().nullable(),
+  lastSyncedAt: z.string().nullable(),
+  isActive: z.boolean(),
   averageRating: z.number(),
   reviewCount: z.number().int(),
   tags: z.array(z.string()),
