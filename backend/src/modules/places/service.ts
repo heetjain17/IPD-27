@@ -2,8 +2,160 @@ import * as locationService from '../location/service.js';
 import * as placesRepo from './repository.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { placeDetailSchema } from './schema.js';
-import type { NearbyQuery } from './schema.js';
-import type { NearbyResponse, PlaceDetail, PlaceSummary, SavedPlaceSummary } from './types.js';
+import type { NearbyQuery, PlacesListQuery } from './schema.js';
+import type {
+  NearbyResponse,
+  PlaceDetail,
+  PlaceListItem,
+  PlaceSummary,
+  PlacesListResponse,
+  SavedPlaceSummary,
+} from './types.js';
+
+interface PlacesCursorPayload {
+  id: string;
+  sortValue: number;
+}
+
+function parsePlacesCursor(cursor: string): PlacesCursorPayload {
+  try {
+    const parsed = JSON.parse(
+      Buffer.from(cursor, 'base64url').toString('utf8'),
+    ) as Partial<PlacesCursorPayload> | null;
+
+    if (
+      !parsed ||
+      typeof parsed !== 'object' ||
+      typeof parsed.id !== 'string' ||
+      parsed.id.length === 0 ||
+      typeof parsed.sortValue !== 'number' ||
+      !Number.isFinite(parsed.sortValue)
+    ) {
+      throw new ApiError(400, 'Invalid cursor');
+    }
+
+    return { id: parsed.id, sortValue: parsed.sortValue };
+  } catch {
+    throw new ApiError(400, 'Invalid cursor');
+  }
+}
+
+function buildPlacesCursor(id: string, sortValue: number): string {
+  return Buffer.from(JSON.stringify({ id, sortValue })).toString('base64url');
+}
+
+function toPlaceListItem(
+  place: Awaited<ReturnType<typeof placesRepo.getPlacesByIds>>[number],
+  fields: PlacesListQuery['fields'],
+  include: PlacesListQuery['include'],
+  distance: number | null,
+): PlaceListItem {
+  const baseItem: PlaceListItem = {
+    id: place.id,
+    name: place.name,
+    lat: place.lat,
+    lng: place.lng,
+  };
+
+  if (fields === 'basic') {
+    return baseItem;
+  }
+
+  const cardItem: PlaceListItem = {
+    ...baseItem,
+    category: place.category,
+    address: place.address ?? null,
+    area: place.area ?? null,
+    thumbnail: place.media[0]?.url ?? null,
+    tags: place.tags,
+    ...(distance !== null ? { distance: Math.round(distance) } : {}),
+  };
+
+  if (fields === 'card') {
+    return cardItem;
+  }
+
+  return {
+    ...cardItem,
+    googleTypes: place.googleTypes ?? [],
+    lastSyncedAt: place.lastSyncedAt ? place.lastSyncedAt.toISOString() : null,
+    isActive: place.isActive,
+    customDescription: place.customDescription ?? null,
+    vibe: place.vibe ?? null,
+    isHiddenGem: place.isHiddenGem,
+    priorityScore: place.priorityScore,
+    verified: place.verified,
+    bestTimeToVisit: place.bestTimeToVisit ?? null,
+    avgCostForTwo: place.avgCostForTwo ?? null,
+    crowdLevelOverride: place.crowdLevelOverride ?? null,
+    notes: place.notes ?? null,
+    averageRating: place.averageRating,
+    reviewCount: place.reviewCount,
+    ...(include.includes('media') ? { media: place.media } : {}),
+  };
+}
+
+export async function listPlaces(query: PlacesListQuery): Promise<PlacesListResponse> {
+  const cursorPayload = query.cursor ? parsePlacesCursor(query.cursor) : null;
+  const validTags = await placesRepo.getExistingTagNames(query.tags);
+
+  const pageParams = {
+    radius: query.radius,
+    tags: validTags,
+    tagsMode: query.tagsMode,
+    sort: query.sort,
+    order: query.order,
+    limit: query.limit,
+    ...(query.lat !== undefined ? { lat: query.lat } : {}),
+    ...(query.lng !== undefined ? { lng: query.lng } : {}),
+    ...(query.category !== undefined ? { category: query.category } : {}),
+    ...(query.area !== undefined ? { area: query.area } : {}),
+    ...(query.verified !== undefined ? { verified: query.verified } : {}),
+    ...(query.isHiddenGem !== undefined ? { isHiddenGem: query.isHiddenGem } : {}),
+    ...(query.minPrice !== undefined ? { minPrice: query.minPrice } : {}),
+    ...(query.maxPrice !== undefined ? { maxPrice: query.maxPrice } : {}),
+    ...(query.q !== undefined ? { q: query.q } : {}),
+    ...(cursorPayload?.sortValue !== undefined ? { cursorSortValue: cursorPayload.sortValue } : {}),
+    ...(cursorPayload?.id !== undefined ? { cursorId: cursorPayload.id } : {}),
+  };
+
+  const pageRows = await placesRepo.getPlacesPage(pageParams);
+
+  const hasMore = pageRows.length > query.limit;
+  const page = hasMore ? pageRows.slice(0, query.limit) : pageRows;
+
+  if (page.length === 0) {
+    return { places: [], nextCursor: null };
+  }
+
+  const ids = page.map((row) => row.placeId);
+  const includeTags = query.fields !== 'basic' || query.include.includes('tags');
+  const includeMedia = query.fields !== 'basic';
+  const placesData = await placesRepo.getPlacesByIds(ids, {
+    includeTags,
+    includeMedia,
+  });
+
+  const placeMap = new Map(placesData.map((place) => [place.id, place]));
+  const distanceMap = new Map(page.map((row) => [row.placeId, row.distanceMetres]));
+
+  const places: PlaceListItem[] = [];
+  for (const id of ids) {
+    const place = placeMap.get(id);
+    if (!place) continue;
+
+    const distance = distanceMap.get(id) ?? null;
+    places.push(toPlaceListItem(place, query.fields, query.include, distance));
+  }
+
+  let nextCursor: string | null = null;
+  if (hasMore) {
+    const last = page[page.length - 1]!;
+    nextCursor = buildPlacesCursor(last.placeId, last.sortValue);
+  }
+
+  return { places, nextCursor };
+}
 
 /**
  * GET /places/nearby

@@ -1,0 +1,54 @@
+info:
+  name: list
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: http://localhost:3000/api/v1/places?lat=19.102037&lng=72.825914&radius=3000&limit=10&fields=card
+  params:
+    - name: lat
+      value: "19.102037"
+      type: query
+    - name: lng
+      value: "72.825914"
+      type: query
+    - name: radius
+      value: "3000"
+      type: query
+    - name: category
+      value: food
+      type: query
+      disabled: true
+    - name: tags
+      value: coffee,wifi
+      type: query
+      disabled: true
+    - name: tagsMode
+      value: any
+      type: query
+      disabled: true
+    - name: sort
+      value: distance
+      type: query
+      disabled: true
+    - name: limit
+      value: "10"
+      type: query
+    - name: fields
+      value: card
+      type: query
+    - name: include
+      value: tags
+      type: query
+      disabled: true
+  body:
+    type: json
+    data: ""
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

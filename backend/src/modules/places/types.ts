@@ -1,5 +1,33 @@
 // API response shapes for the Places module
 
+export interface PlaceListItem {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  category?: string;
+  address?: string | null;
+  googleTypes?: string[];
+  area?: string | null;
+  lastSyncedAt?: string | null;
+  isActive?: boolean;
+  customDescription?: string | null;
+  vibe?: string | null;
+  isHiddenGem?: boolean;
+  priorityScore?: number;
+  verified?: boolean;
+  bestTimeToVisit?: string | null;
+  avgCostForTwo?: number | null;
+  crowdLevelOverride?: string | null;
+  notes?: string | null;
+  averageRating?: number;
+  reviewCount?: number;
+  distance?: number;
+  tags?: string[];
+  thumbnail?: string | null;
+  media?: { url: string; type: string | null }[];
+}
+
 export interface PlaceSummary {
   id: string;
   name: string;
@@ -79,6 +107,22 @@ export interface PlaceDetail {
 export interface NearbyResponse {
   places: PlaceSummary[];
   nextCursor: string | null;
+}
+
+export interface PlacesListResponse {
+  places: PlaceListItem[];
+  nextCursor: string | null;
+}
+
+export interface PlaceListPageRow {
+  placeId: string;
+  sortValue: number;
+  distanceMetres: number | null;
+}
+
+export interface PlaceEnrichmentOptions {
+  includeTags?: boolean;
+  includeMedia?: boolean;
 }
 
 // Internal enriched type returned by the repository (used inside the module only)
