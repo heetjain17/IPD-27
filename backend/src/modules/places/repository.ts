@@ -336,6 +336,24 @@ export async function getPlacesByIds(
 }
 
 export async function getPlaceById(id: string): Promise<PlaceWithEnrichment | null> {
-  const rows = await getPlacesByIds([id]);
-  return rows[0] ?? null;
+  const rows = await getPlacesByIds([id], { includeTags: true, includeMedia: false });
+  const place = rows[0] ?? null;
+  if (!place) {
+    return null;
+  }
+
+  const mediaRows = await db
+    .select({
+      url: placeMedia.url,
+      type: placeMedia.type,
+    })
+    .from(placeMedia)
+    .where(eq(placeMedia.placeId, id))
+    .orderBy(asc(placeMedia.createdAt), asc(placeMedia.id))
+    .limit(10);
+
+  return {
+    ...place,
+    media: mediaRows.map((row) => ({ url: row.url, type: row.type ?? null })),
+  };
 }

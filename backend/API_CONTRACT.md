@@ -537,7 +537,7 @@ Returns metadata for building client-side filter UIs.
 - `averageRating` and `reviewCount` are cached columns on `places`
 - Cached values are kept in sync by Postgres trigger on `reviews`
 - This is the primary full-detail endpoint for a single place
-- Returns tags, limited media, and rating summary
+- Returns tags, a limited media preview (up to 10 items), and rating summary
 
 ---
 

@@ -19,6 +19,8 @@ interface PlacesCursorPayload {
   sortValue: number;
 }
 
+const PLACE_DETAIL_MEDIA_LIMIT = 10;
+
 function parsePlacesCursor(cursor: string): PlacesCursorPayload {
   try {
     const parsed = JSON.parse(
@@ -299,7 +301,7 @@ export async function getById(id: string): Promise<PlaceDetail> {
     averageRating: place.averageRating,
     reviewCount: place.reviewCount,
     tags: place.tags ?? [],
-    media: place.media ?? [],
+    media: (place.media ?? []).slice(0, PLACE_DETAIL_MEDIA_LIMIT),
   };
 
   return placeDetailSchema.parse(detail);
