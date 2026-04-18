@@ -5,19 +5,19 @@ info:
 
 http:
   method: GET
-  url: http://localhost:3000/api/v1/places/nearby?lat=37.7749&lng=-122.4194&radius=3000&limit=2
+  url: http://localhost:3000/api/v1/places/nearby?lat=19.102037&lng=72.825914&radius=3000&limit=4
   params:
     - name: lat
-      value: "37.7749"
+      value: "19.102037"
       type: query
     - name: lng
-      value: "-122.4194"
+      value: "72.825914"
       type: query
     - name: radius
       value: "3000"
       type: query
     - name: limit
-      value: "2"
+      value: "4"
       type: query
   body:
     type: json
