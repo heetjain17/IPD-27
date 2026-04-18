@@ -16,7 +16,7 @@ Before writing endpoints:
 - No raw DB leaking
 - Pagination always standardized (cursor-based)
 - Errors standardized
-- Auth via Bearer token (Supabase JWT)
+- Auth via Bearer token and secure cookies (Supabase JWT)
 - Mobile calls backend API, NOT Supabase directly
 
 ---
@@ -26,8 +26,9 @@ Before writing endpoints:
 ```json
 {
   "success": true,
-  "data": {},
-  "error": null
+  "statusCode": 200,
+  "message": "Operation successful",
+  "data": {}
 }
 ```
 
@@ -36,11 +37,13 @@ Before writing endpoints:
 ```json
 {
   "success": false,
-  "data": null,
-  "error": {
-    "code": "INVALID_INPUT",
-    "message": "Invalid email"
-  }
+  "message": "Validation error",
+  "errors": [
+    {
+      "field": "email",
+      "message": "Invalid email"
+    }
+  ]
 }
 ```
 
@@ -65,9 +68,11 @@ Before writing endpoints:
 {
   "email": "user@example.com",
   "password": "string",
-  "name": "John Doe" // optional
+  "name": "John Doe"
 }
 ```
+
+`name` is optional.
 
 ### Response (201 Created)
 
@@ -303,23 +308,25 @@ Set-Cookie: refreshToken=<new-token>; HttpOnly; Secure; SameSite=Strict; Max-Age
 
 # 3) Places API
 
-## GET /places/nearby
+## GET /api/v1/places/nearby
 
 ### Query Params
 
 ```text
 lat: number
 lng: number
-radius: number (meters)
-limit: number (default 20)
+radius: number (meters, min 1, max 50000)
+limit: number (default 20, max 100)
 cursor: string (optional)
 ```
 
-### Response
+### Response (200 OK)
 
 ```json
 {
   "success": true,
+  "statusCode": 200,
+  "message": "Nearby places retrieved",
   "data": {
     "places": [
       {
@@ -330,28 +337,31 @@ cursor: string (optional)
         "category": "food",
         "distance": 120,
         "tags": ["coffee", "wifi"],
-        "thumbnail": "url"
+        "thumbnail": "https://..."
       }
     ],
-    "nextCursor": "string"
+    "nextCursor": "base64url-cursor-or-null"
   }
 }
 ```
 
 ### Notes
 
-- `distance` is computed (not stored)
-- Uses PostGIS (`ST_DWithin`)
+- Public endpoint
+- `distance` is computed by Location module (metres)
+- Uses keyset pagination cursor
 
 ---
 
-## GET /places/:id
+## GET /api/v1/places/:id
 
-### Response
+### Response (200 OK)
 
 ```json
 {
   "success": true,
+  "statusCode": 200,
+  "message": "Place retrieved",
   "data": {
     "id": "uuid",
     "name": "Cafe",
@@ -359,44 +369,30 @@ cursor: string (optional)
     "lat": 19.07,
     "lng": 72.87,
     "category": "food",
-    "tags": ["coffee"],
+    "averageRating": 4.3,
+    "reviewCount": 12,
+    "tags": ["coffee", "wifi"],
     "media": [
       {
-        "url": "string",
+        "url": "https://...",
         "type": "image"
-      }
-    ],
-    "reviews": [
-      {
-        "rating": 4.5,
-        "comment": "Great place"
       }
     ]
   }
 }
 ```
 
----
+### Notes
 
-## (Optional Admin) POST /places
-
-### Request
-
-```json
-{
-  "name": "Cafe",
-  "lat": 19.07,
-  "lng": 72.87,
-  "category": "food",
-  "source": "user"
-}
-```
+- Public endpoint
+- `averageRating` and `reviewCount` are cached columns on `places`
+- Cached values are kept in sync by Postgres trigger on `reviews`
 
 ---
 
 # 4) Saved Places API
 
-## POST /places/save
+## POST /api/v1/places/save
 
 ### Request
 
@@ -406,67 +402,87 @@ cursor: string (optional)
 }
 ```
 
-### Response
+### Response (200 OK)
 
 ```json
 {
   "success": true,
+  "statusCode": 200,
+  "message": "Place saved",
   "data": {
     "saved": true
   }
 }
 ```
 
+### Errors
+
+- `401 Unauthorized` - Not authenticated
+- `404 Not Found` - Place not found
+- `409 Conflict` - Place already saved
+
 ---
 
-## DELETE /places/save/:placeId
+## DELETE /api/v1/places/save/:placeId
 
-### Response
+### Response (200 OK)
 
 ```json
 {
   "success": true,
+  "statusCode": 200,
+  "message": "Place unsaved",
   "data": {
     "saved": false
   }
 }
 ```
 
+### Errors
+
+- `401 Unauthorized` - Not authenticated
+- `404 Not Found` - Saved place not found
+
 ---
 
-## GET /places/saved
+## GET /api/v1/places/saved
 
 ### Query Params
 
 ```text
-limit: number
-cursor: string
+limit: number (default 20, max 100)
+cursor: string (optional)
 ```
 
-### Response
+### Response (200 OK)
 
 ```json
 {
   "success": true,
+  "statusCode": 200,
+  "message": "Saved places retrieved",
   "data": {
     "places": [
       {
         "id": "uuid",
         "name": "Cafe",
         "lat": 19.07,
-        "lng": 72.87
+        "lng": 72.87,
+        "category": "food",
+        "tags": ["coffee"],
+        "thumbnail": "https://..."
       }
     ],
-    "nextCursor": "string"
+    "nextCursor": "base64url-cursor-or-null"
   }
 }
 ```
 
 ---
 
-# 5) Reviews API (you added table → use it minimally)
+# 5) Reviews API
 
-## POST /reviews
+## POST /api/v1/reviews
 
 ### Request
 
@@ -478,36 +494,78 @@ cursor: string
 }
 ```
 
----
-
-## GET /places/:id/reviews
-
-### Response
+### Response (201 Created)
 
 ```json
 {
   "success": true,
+  "statusCode": 201,
+  "message": "Review created",
+  "data": {
+    "review": {
+      "id": "uuid",
+      "placeId": "uuid",
+      "userId": "uuid",
+      "rating": 4.5,
+      "comment": "Nice place",
+      "createdAt": "2026-04-17T10:00:00.000Z"
+    }
+  }
+}
+```
+
+### Notes
+
+- Protected endpoint
+- On insert/update/delete, DB trigger updates `places.average_rating` and `places.review_count`
+
+---
+
+## GET /api/v1/places/:id/reviews
+
+### Query Params
+
+```text
+limit: number (default 20, max 100)
+cursor: string (optional)
+```
+
+### Response (200 OK)
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Reviews retrieved",
   "data": {
     "reviews": [
       {
+        "id": "uuid",
+        "placeId": "uuid",
         "userId": "uuid",
         "rating": 4.5,
-        "comment": "Nice place"
+        "comment": "Nice place",
+        "createdAt": "2026-04-17T10:00:00.000Z"
       }
-    ]
+    ],
+    "nextCursor": "base64url-cursor-or-null"
   }
 }
 ```
 
 ---
 
-# 6) Tags API (optional but useful)
+# 6) Tags API
 
-## GET /tags
+## GET /api/v1/tags
+
+### Response (200 OK)
 
 ```json
 {
   "success": true,
+  "statusCode": 200,
+  "message": "Tags retrieved",
   "data": {
     "tags": ["coffee", "wifi"]
   }
@@ -520,255 +578,82 @@ cursor: string
 
 ## GET /health
 
+### Response (200 OK)
+
 ```json
 {
-  "status": "ok"
+  "success": true,
+  "data": {
+    "status": "ok",
+    "db": "connected"
+  },
+  "error": null
 }
 ```
 
 ---
 
-# 8) Important backend decisions (based on your schema)
+# 8) Authentication & Authorization
 
-From your schema:
+### Token sources
 
-### You MUST handle:
+- `Authorization: Bearer <access-token>` header
+- `accessToken` cookie (fallback in auth middleware)
 
-- **Auth:** Supabase Auth via Admin API (service role key)
-- **Users table:** No `passwordHash` - auth handled by Supabase
-- **`geom` column:** Populated manually using PostGIS functions
-  ```sql
-  ST_SetSRID(ST_MakePoint(lng, lat), 4326)
-  ```
-- **Joins:**
-  - places ↔ tags (via `place_tags`)
-  - places ↔ media
-  - places ↔ reviews
-- **Unique constraints:**
-  - saved_places (user_id, place_id) - composite PK
-  - places.external_id (partial unique index WHERE NOT NULL)
-- **Enums:**
-  - `place_source` - PostgreSQL enum ('google', 'user', 'admin')
-  - `place_media.type` - inline enum ('image', 'video')
+### Protected routes
 
----
-
-# 9) Authentication & Authorization
-
-### JWT Middleware
-
-**All protected routes require:**
-
-```
-Authorization: Bearer <supabase-jwt-token>
-```
-
-**Middleware responsibilities:**
-
-1. Verify Supabase JWT signature
-2. Extract user ID from JWT claims
-3. Attach `req.user` with user data
-4. Return 401 if token invalid/expired
-
-**Protected routes:**
-
-- `POST /places/save`
-- `DELETE /places/save/:placeId`
-- `GET /places/saved`
-- `POST /reviews`
-- `GET /auth/me`
-- `POST /auth/logout`
+- `POST /api/v1/auth/logout`
+- `GET /api/v1/auth/me`
+- `POST /api/v1/places/save`
+- `DELETE /api/v1/places/save/:placeId`
+- `GET /api/v1/places/saved`
+- `POST /api/v1/reviews`
 
 ### Environment Variables Required
 
 ```env
+PORT=4000
+NODE_ENV=development
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key (backend only)
-JWT_SECRET=your-supabase-jwt-secret
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 DATABASE_URL=postgresql://...
 ```
 
 ---
 
-# 10) Pagination strategy (decide now)
+# 9) Final API surface (implemented)
 
-Use **cursor-based pagination**
+### Auth
 
-Why:
-
-- stable
-- scalable
-
----
-
-# 11) Final API surface (V1)
-
-### Auth (Supabase-backed)
-
-- `POST /auth/register` - Create Supabase user + profile
-- `POST /auth/login` - Verify credentials, return JWT
-- `POST /auth/logout` - Invalidate session (protected)
-- `GET /auth/me` - Get current user (protected)
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/logout`
+- `GET /api/v1/auth/me`
+- `POST /api/v1/auth/refresh`
 
 ### Places
 
-- `GET /places/nearby` - PostGIS radius query (public)
-- `GET /places/:id` - Get place details with joins (public)
-- `POST /places` - Create place (admin only, future)
+- `GET /api/v1/places/nearby`
+- `GET /api/v1/places/:id`
+- `GET /api/v1/places/:id/reviews`
 
 ### Saved Places
 
-- `POST /places/save` - Save place (protected)
-- `DELETE /places/save/:placeId` - Unsave place (protected)
-- `GET /places/saved` - List saved places (protected)
+- `POST /api/v1/places/save`
+- `DELETE /api/v1/places/save/:placeId`
+- `GET /api/v1/places/saved`
 
 ### Reviews
 
-- `POST /reviews` - Create review (protected)
-- `GET /places/:id/reviews` - List place reviews (public)
+- `POST /api/v1/reviews`
 
 ### Tags
 
-- `GET /tags` - List all tags (public)
+- `GET /api/v1/tags`
 
 ### System
 
-- `GET /health` - Health check (public)
-
----
-
-# 12) Schema-API alignment
-
-Your schema already supports:
-
-- ✅ Geo queries (PostGIS geography + GIST index)
-- ✅ Tagging (many-to-many via `place_tags`)
-- ✅ Media (one-to-many `place_media`)
-- ✅ Reviews (one-to-many with double precision rating)
-- ✅ External sources (enum + partial unique index)
-- ✅ User bookmarks (`saved_places` composite PK)
-- ✅ Supabase Auth integration (no password_hash in users table)
-
-**API layer is clean mapping, not redesign.**
-
-### Data Flow Examples
-
-**Register:**
-
-```
-Client → POST /auth/register
-  → Backend validates input
-  → Backend calls Supabase Admin API (createUser)
-  → Backend inserts into public.users (with auth_id reference)
-  → Returns Supabase JWT to client
-```
-
-**Nearby Places:**
-
-```
-Client → GET /places/nearby?lat=19.07&lng=72.87&radius=1000
-  → Backend validates params
-  → PostGIS query: ST_DWithin(geom, point, radius)
-  → Join with tags, media
-  → Return sorted by distance
-```
-
-**Save Place:**
-
-```
-Client → POST /places/save (with JWT)
-  → Auth middleware verifies JWT
-  → Extract user_id from token
-  → Insert into saved_places (user_id, place_id)
-  → Handle duplicate (composite PK prevents)
-  → Return success
-```
-
----
-
-# 13) What NOT to add right now
-
-- search engine
-- filters explosion
-- sorting by rating/popularity
-- AI endpoints
-- activity endpoints
-
----
-
-# 14) Implementation Notes
-
-### Supabase Auth Integration
-
-**Backend responsibilities:**
-
-1. Use `@supabase/supabase-js` with service role key
-2. Create auth users via `supabase.auth.admin.createUser()`
-3. Verify sessions via `supabase.auth.getUser(jwt)`
-4. Sync `auth.users.id` → `public.users.id`
-
-**Security:**
-
-- ❌ Never expose service role key to mobile
-- ✅ Mobile only receives Supabase JWT from backend
-- ✅ Backend validates JWT on protected routes
-- ✅ RLS enabled on `public.users` table
-
-### PostGIS Integration
-
-**Geom column population:**
-
-```typescript
-// In repository layer
-await db.execute(sql`
-  UPDATE places 
-  SET geom = ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)
-  WHERE id = ${placeId}
-`);
-```
-
-**Nearby query:**
-
-```typescript
-await db.execute(sql`
-  SELECT *, 
-    ST_Distance(geom, ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography) as distance
-  FROM places
-  WHERE ST_DWithin(
-    geom,
-    ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography,
-    ${radiusMeters}
-  )
-  ORDER BY distance
-  LIMIT ${limit}
-`);
-```
-
----
-
-# 15) Next Steps
-
-At this point you have:
-
-- ✅ Database schema (Drizzle ORM)
-- ✅ API contracts (this document)
-- ✅ Supabase Auth strategy
-
-**Next: Module-wise implementation**
-
-1. Install dependencies (`@supabase/supabase-js`, `jsonwebtoken`)
-2. Create Supabase client utilities (admin + public)
-3. Build Auth module (controller → service → repository)
-4. Build auth middleware (JWT verification)
-5. Build remaining modules following AGENT.md structure
-
-**Module order:**
-
-1. Auth (foundation)
-2. User (profile management)
-3. Places (core feature)
-4. Saved Places (user interaction)
-5. Reviews (optional but included in schema)
+- `GET /health`
 
 ---
