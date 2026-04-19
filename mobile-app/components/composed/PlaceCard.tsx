@@ -1,4 +1,4 @@
-import { IconMapPin, IconStar } from '@tabler/icons-react-native';
+import { IconMapPin } from '@tabler/icons-react-native';
 import { Image } from 'expo-image';
 import { View } from 'react-native';
 
@@ -7,6 +7,7 @@ import { AppChip } from '@/components/primitives/AppChip';
 import { AppText } from '@/components/primitives/AppText';
 import { Colors } from '@/constants/colors';
 import { useAppTheme } from '@/context/ThemeContext';
+import { RatingRow } from './RatingRow';
 import type { Place } from '@/types/api';
 
 interface PlaceCardProps {
@@ -31,7 +32,7 @@ export function PlaceCard({ place, onPress }: PlaceCardProps) {
     <AppCard onPress={onPress}>
       <View className="flex-row gap-3 p-2">
         {/* Thumbnail */}
-        <View className="bg-surface-subtle w-24 self-stretch overflow-hidden rounded-[1.115rem]">
+        <View className="w-24 self-stretch overflow-hidden rounded-[1.115rem] bg-surface-subtle">
           {thumbnail ? (
             <Image
               source={{ uri: thumbnail }}
@@ -57,19 +58,7 @@ export function PlaceCard({ place, onPress }: PlaceCardProps) {
             </AppText>
           </View>
 
-          {/* Rating row */}
-          <View className="flex-row items-center gap-1">
-            <IconStar
-              size={13}
-              color={place.averageRating > 0 ? palette.warning : palette.onSurfaceMuted}
-              fill={place.averageRating > 0 ? palette.warning : 'transparent'}
-            />
-            <AppText variant="labelSM" color={place.averageRating > 0 ? 'default' : 'muted'}>
-              {place.averageRating > 0
-                ? `${place.averageRating.toFixed(1)}  (${place.reviewCount})`
-                : 'No reviews'}
-            </AppText>
-          </View>
+          <RatingRow rating={place.averageRating} count={place.reviewCount} size="sm" />
 
           {/* Tags */}
           {visibleTags.length > 0 && (
