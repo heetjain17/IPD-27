@@ -27,7 +27,7 @@ export function SearchBar({
 
   return (
     <View
-      className="flex-row items-center gap-3 rounded-roundedness-full bg-surface-raised px-4 py-3"
+      className="flex-row items-center gap-3 rounded-roundedness-full bg-surface-raised px-4 py-1"
       style={{ borderWidth: 1.5, borderColor: palette.outline }}
     >
       <IconSearch size={18} color={palette.onSurfaceMuted} />

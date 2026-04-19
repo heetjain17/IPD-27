@@ -62,9 +62,10 @@ function RootLayoutInner() {
   useEffect(() => {
     if (!isHydrated) return;
     const inAuthGroup = segments[0] === '(auth)';
+    const inTabGroup = segments[0] === '(tabs)';
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/(auth)/login');
-    } else if (isAuthenticated && inAuthGroup) {
+    } else if (isAuthenticated && !inTabGroup) {
       router.replace('/(tabs)/explore');
     }
   }, [isHydrated, isAuthenticated, segments, router]);

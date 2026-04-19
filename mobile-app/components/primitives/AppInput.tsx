@@ -38,7 +38,7 @@ export function AppInput({
       )}
 
       <View
-        className="flex-row items-center gap-3 rounded-roundedness-md bg-surface-raised px-4 py-2.5"
+        className="flex-row items-center gap-3 rounded-roundedness-md bg-surface-raised px-4 py-2"
         style={{ borderWidth: 1.5, borderColor }}
       >
         {leftIcon && <View>{leftIcon}</View>}

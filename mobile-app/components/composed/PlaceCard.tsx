@@ -28,10 +28,10 @@ export function PlaceCard({ place, onPress }: PlaceCardProps) {
   const visibleTags = place.tags.slice(0, 3);
 
   return (
-    <AppCard onPress={onPress} className="overflow-hidden">
-      <View className="flex-row">
+    <AppCard onPress={onPress}>
+      <View className="flex-row gap-3 p-2">
         {/* Thumbnail */}
-        <View className="h-28 w-28 bg-surface-subtle">
+        <View className="bg-surface-subtle w-24 self-stretch overflow-hidden rounded-[1.115rem]">
           {thumbnail ? (
             <Image
               source={{ uri: thumbnail }}
@@ -46,7 +46,7 @@ export function PlaceCard({ place, onPress }: PlaceCardProps) {
         </View>
 
         {/* Info */}
-        <View className="flex-1 justify-between gap-1 px-3 py-2.5">
+        <View className="flex-1 justify-between gap-1 py-1 pr-1">
           <View className="gap-0.5">
             <AppText variant="titleMD" numberOfLines={1}>
               {place.name}
