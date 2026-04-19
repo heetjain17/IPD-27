@@ -5,8 +5,9 @@ import {
   ThemeProvider as NavThemeProvider,
 } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { vars } from 'nativewind';
 import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -15,6 +16,7 @@ import '../global.css';
 
 import { Colors, type ColorScheme } from '@/constants/colors';
 import { ThemeProvider, useAppTheme } from '@/context/ThemeContext';
+import { useAuthStore } from '@/store/authStore';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,6 +49,26 @@ function RootLayoutInner() {
   const { colorScheme } = useAppTheme();
   const isDark = colorScheme === 'dark';
   const palette = Colors[colorScheme];
+
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isHydrated = useAuthStore((s) => s.isHydrated);
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    void useAuthStore.getState().hydrate();
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    const inAuthGroup = segments[0] === '(auth)';
+    if (!isAuthenticated && !inAuthGroup) {
+      router.replace('/(auth)/login');
+    } else if (isAuthenticated && inAuthGroup) {
+      router.replace('/(tabs)/explore');
+    }
+  }, [isHydrated, isAuthenticated, segments, router]);
+
   const navigationTheme: NavigationTheme = {
     ...(isDark ? DarkTheme : DefaultTheme),
     colors: {

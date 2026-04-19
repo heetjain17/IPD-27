@@ -5,8 +5,8 @@ module.exports = {
     surfaceRaised: '#1a2027',
     surfaceSubtle: '#151a20',
 
-    primary: '#4da3ff',
-    primaryStrong: '#1f6feb',
+    primary: '#60a5fa',
+    primaryStrong: '#3b82f6',
 
     onBackground: '#ffffff',
     onSurface: '#e6edf3',
