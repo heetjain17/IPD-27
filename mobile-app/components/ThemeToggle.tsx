@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Pressable } from 'react-native';
 
+import { Colors } from '@/constants/colors';
 import { useAppTheme } from '@/context/ThemeContext';
 
 /**
@@ -15,6 +16,7 @@ import { useAppTheme } from '@/context/ThemeContext';
 export function ThemeToggle() {
   const { colorScheme, toggleTheme } = useAppTheme();
   const isDark = colorScheme === 'dark';
+  const theme = Colors[colorScheme];
 
   return (
     <Pressable
@@ -23,7 +25,7 @@ export function ThemeToggle() {
       accessibilityRole="button"
       accessibilityLabel={'Switch mode'}
     >
-      <Ionicons name={isDark ? 'sunny-outline' : 'moon-outline'} size={22} color={'#d7fd4e'} />
+      <Ionicons name={isDark ? 'sunny-outline' : 'moon-outline'} size={22} color={theme.primary} />
     </Pressable>
   );
 }

@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useColorScheme as useSystemColorScheme } from 'react-native';
 
-import type { ColorScheme } from '@/constants/theme';
+import type { ColorScheme } from '@/constants/colors';
 
 const STORAGE_KEY = '@theme';
 

@@ -1,4 +1,8 @@
-module.exports = {
+/**
+ * App color tokens for runtime TypeScript usage.
+ * Keep this in sync with constants/colors.js which is consumed by tailwind.config.js.
+ */
+export const Colors = {
   dark: {
     background: '#0a0a0a',
     surface: '#111111',
@@ -18,6 +22,7 @@ module.exports = {
     outline: '#5a5a5a',
     error: '#ffb4ab',
   },
+
   light: {
     background: '#fafafa',
     surface: '#f3f3f3',
@@ -37,4 +42,7 @@ module.exports = {
     outline: '#a0a0a0',
     error: '#ba1a1a',
   },
-};
+} as const;
+
+export type ColorScheme = keyof typeof Colors;
+export type AppColors = (typeof Colors)[ColorScheme];

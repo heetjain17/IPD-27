@@ -1,6 +1,7 @@
 import {
   DarkTheme,
   DefaultTheme,
+  type Theme as NavigationTheme,
   ThemeProvider as NavThemeProvider,
 } from '@react-navigation/native';
 import { Stack } from 'expo-router';
@@ -10,6 +11,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import '../global.css';
 
+import { Colors } from '@/constants/colors';
 import { ThemeProvider, useAppTheme } from '@/context/ThemeContext';
 
 /**
@@ -19,9 +21,22 @@ import { ThemeProvider, useAppTheme } from '@/context/ThemeContext';
 function RootLayoutInner() {
   const { colorScheme } = useAppTheme();
   const isDark = colorScheme === 'dark';
+  const palette = Colors[colorScheme];
+  const navigationTheme: NavigationTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
+      primary: palette.primary,
+      background: palette.background,
+      card: palette.surface,
+      text: palette.onSurface,
+      border: palette.outlineVariant,
+      notification: palette.error,
+    },
+  };
 
   return (
-    <NavThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+    <NavThemeProvider value={navigationTheme}>
       {/* This View's className controls NativeWind dark-mode for the whole tree */}
       <View className={`flex-1 ${isDark ? 'dark' : ''}`}>
         <Stack screenOptions={{ headerShown: false }} />
