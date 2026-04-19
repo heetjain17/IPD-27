@@ -4,6 +4,7 @@ import {
   type Theme as NavigationTheme,
   ThemeProvider as NavThemeProvider,
 } from '@react-navigation/native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { vars } from 'nativewind';
@@ -14,6 +15,15 @@ import '../global.css';
 
 import { Colors, type ColorScheme } from '@/constants/colors';
 import { ThemeProvider, useAppTheme } from '@/context/ThemeContext';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 5 * 60 * 1000,
+    },
+  },
+});
 
 function buildVars(scheme: ColorScheme) {
   const palette = Colors[scheme];
@@ -68,9 +78,11 @@ function RootLayoutInner() {
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider>
-        <RootLayoutInner />
-      </ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <RootLayoutInner />
+        </ThemeProvider>
+      </QueryClientProvider>
     </GestureHandlerRootView>
   );
 }

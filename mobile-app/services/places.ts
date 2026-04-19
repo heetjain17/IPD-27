@@ -1,6 +1,7 @@
 import type {
   ApiSuccess,
   FilterMeta,
+  MediaResponse,
   NearbyParams,
   PlaceDetail,
   PlacesParams,
@@ -35,6 +36,16 @@ export async function getPlaceReviews(
     `/api/v1/places/${id}/reviews`,
     { params },
   );
+  return data.data;
+}
+
+export async function getPlaceMedia(
+  id: string,
+  params?: { limit?: number; cursor?: string },
+): Promise<MediaResponse> {
+  const { data } = await apiClient.get<ApiSuccess<MediaResponse>>(`/api/v1/places/${id}/media`, {
+    params,
+  });
   return data.data;
 }
 

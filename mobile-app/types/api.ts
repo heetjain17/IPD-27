@@ -109,6 +109,32 @@ export interface ReviewsResponse {
   nextCursor: string | null;
 }
 
+export interface CreateReviewParams {
+  placeId: string;
+  rating: number;
+  comment?: string;
+}
+
+// ─── Media ────────────────────────────────────────────────────────────────────
+
+export interface MediaResponse {
+  media: PlaceMedia[];
+  nextCursor: string | null;
+}
+
+// ─── Saved Places ─────────────────────────────────────────────────────────────
+
+export interface SavedPlacesResponse {
+  places: Place[];
+  nextCursor: string | null;
+}
+
+// ─── Tags ─────────────────────────────────────────────────────────────────────
+
+export interface TagsResponse {
+  tags: string[];
+}
+
 // ─── Query Params ─────────────────────────────────────────────────────────────
 
 export type PlacesSortKey =
