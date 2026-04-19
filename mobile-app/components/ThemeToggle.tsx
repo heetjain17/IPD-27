@@ -21,7 +21,7 @@ export function ThemeToggle() {
   return (
     <Pressable
       onPress={toggleTheme}
-      className={`h-8 w-14 items-center justify-center rounded-full bg-surface-container-highest p-1 transition-colors duration-300`}
+      className={`bg-surface-container-highest h-8 w-14 items-center justify-center rounded-full p-1 transition-colors duration-300`}
       accessibilityRole="button"
       accessibilityLabel={'Switch mode'}
     >

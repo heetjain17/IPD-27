@@ -30,7 +30,7 @@ function RootLayoutInner() {
       background: palette.background,
       card: palette.surface,
       text: palette.onSurface,
-      border: palette.outlineVariant,
+      border: palette.outline,
       notification: palette.error,
     },
   };

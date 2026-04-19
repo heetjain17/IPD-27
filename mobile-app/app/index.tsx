@@ -1,44 +1,65 @@
-import React from 'react';
-import { Pressable, View } from 'react-native';
+import React, { useState } from 'react';
+import { View } from 'react-native';
 
-import { Colors } from '@/constants/colors';
+import { AppButton } from '@/components/primitives/AppButton';
+import { AppInput } from '@/components/primitives/AppInput';
 import { AppScreen } from '@/components/primitives/AppScreen';
 import { AppText } from '@/components/primitives/AppText';
 import { useAppTheme } from '@/context/ThemeContext';
 
 export default function HomeScreen() {
-  const { colorScheme, toggleTheme } = useAppTheme();
-  const palette = Colors[colorScheme];
+  const { toggleTheme } = useAppTheme();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   return (
-    <AppScreen>
-      <View className="flex-1 items-center justify-center">
-        <View className="w-full max-w-md gap-4 rounded-roundedness-lg bg-surface-container p-6">
-          <AppText variant="displayMD">Hello World</AppText>
-          <AppText variant="bodyLG" color="muted">
-            AppScreen + AppText primitives are working.
-          </AppText>
-          <AppText variant="titleMD">Title MD — display font</AppText>
-          <AppText variant="bodySM" color="muted">
-            Body SM — body font
-          </AppText>
-          <AppText variant="labelSM" color="accent">
-            Label SM — accent
-          </AppText>
+    <AppScreen scroll padded>
+      <View className="gap-6 pt-8">
+        <AppText variant="displayMD">Step 3</AppText>
+        <AppText variant="bodyLG" color="muted">
+          AppButton + AppInput primitives
+        </AppText>
 
-          <Pressable
-            onPress={toggleTheme}
-            className="mt-2 items-center rounded-roundedness-xl py-3"
-            style={{ backgroundColor: palette.primary }}
-          >
-            <AppText
-              variant="bodyLG"
-              className="font-semibold"
-              style={{ color: palette.onPrimary }}
-            >
-              Toggle Theme
-            </AppText>
-          </Pressable>
+        <View className="gap-3">
+          <AppInput
+            label="Email"
+            placeholder="you@example.com"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <AppInput
+            label="Password"
+            placeholder="Min 8 characters"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            error={password.length > 0 && password.length < 8 ? 'Password too short' : undefined}
+          />
+          <AppInput
+            label="With helper"
+            placeholder="Optional field"
+            helper="This field is optional"
+          />
+        </View>
+
+        <View className="gap-3">
+          <AppButton onPress={toggleTheme} fullWidth>
+            Primary Button
+          </AppButton>
+          <AppButton variant="secondary" fullWidth>
+            Secondary Button
+          </AppButton>
+          <AppButton variant="tertiary" fullWidth>
+            Tertiary Button
+          </AppButton>
+          <AppButton loading fullWidth>
+            Loading State
+          </AppButton>
+          <AppButton disabled fullWidth>
+            Disabled State
+          </AppButton>
         </View>
       </View>
     </AppScreen>

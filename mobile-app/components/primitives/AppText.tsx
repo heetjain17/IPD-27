@@ -23,7 +23,7 @@ const variantClass: Record<TextVariant, string> = {
 
 const colorClass: Record<TextColor, string> = {
   default: 'text-on-surface',
-  muted: 'text-on-surface-variant',
+  muted: 'text-on-surface-muted',
   accent: 'text-primary',
   error: 'text-error',
 };
