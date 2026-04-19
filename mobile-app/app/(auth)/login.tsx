@@ -89,7 +89,7 @@ export default function LoginPage() {
 
               <View className="flex-row items-center justify-center gap-1">
                 <AppText variant="bodySM" color="muted">
-                  Don't have an account?
+                  Don&apos;t have an account?
                 </AppText>
                 <AppButton
                   variant="tertiary"
