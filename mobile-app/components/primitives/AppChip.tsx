@@ -33,8 +33,7 @@ export function AppChip({
     <Pressable
       onPress={onPress}
       disabled={!onPress}
-      style={({ pressed }) => ({ opacity: pressed && onPress ? 0.75 : 1 })}
-      className={`${containerClass} ${paddingClass} ${className}`}
+      className={`${containerClass} ${paddingClass} active:opacity-75 ${className}`}
     >
       <AppText
         variant={size === 'md' ? 'bodySM' : 'labelSM'}

@@ -1,75 +1,42 @@
-import { IconHeart, IconMapPin, IconSearch, IconStar } from '@tabler/icons-react-native';
-import React, { useState } from 'react';
+import React from 'react';
 import { View } from 'react-native';
 
+import { EmptyState } from '@/components/primitives/EmptyState';
+import { ErrorState } from '@/components/primitives/ErrorState';
+import { LoadingState } from '@/components/primitives/LoadingState';
 import { AppButton } from '@/components/primitives/AppButton';
-import { AppCard } from '@/components/primitives/AppCard';
-import { AppChip } from '@/components/primitives/AppChip';
-import { AppIcon } from '@/components/primitives/AppIcon';
 import { AppScreen } from '@/components/primitives/AppScreen';
 import { AppSection } from '@/components/primitives/AppSection';
 import { AppText } from '@/components/primitives/AppText';
 import { useAppTheme } from '@/context/ThemeContext';
 
-const CATEGORIES = ['All', 'Food', 'Nature', 'Culture', 'Nightlife'];
-
 export default function HomeScreen() {
   const { toggleTheme } = useAppTheme();
-  const [active, setActive] = useState('All');
 
   return (
     <AppScreen scroll padded>
-      <View className="gap-8 pt-8">
-        <AppText variant="displayMD">Step 4</AppText>
+      <View className="gap-8 pb-8 pt-8">
+        <View className="flex-row items-center justify-between">
+          <AppText variant="displayMD">Step 5</AppText>
+          <AppButton variant="tertiary" size="sm" onPress={toggleTheme}>
+            Toggle theme
+          </AppButton>
+        </View>
 
-        <AppSection title="Icons">
-          <View className="flex-row gap-4">
-            <AppIcon Icon={IconMapPin} size="lg" color="accent" />
-            <AppIcon Icon={IconStar} size="lg" color="default" />
-            <AppIcon Icon={IconHeart} size="lg" color="error" />
-            <AppIcon Icon={IconSearch} size="lg" color="muted" />
-          </View>
+        <AppSection title="Loading">
+          <LoadingState label="Fetching places…" />
         </AppSection>
 
-        <AppSection title="Chips">
-          <View className="flex-row flex-wrap gap-2">
-            {CATEGORIES.map((c) => (
-              <AppChip key={c} label={c} active={active === c} onPress={() => setActive(c)} />
-            ))}
-          </View>
+        <AppSection title="Error">
+          <ErrorState message="Could not load places. Check your connection." onRetry={() => {}} />
         </AppSection>
 
-        <AppSection
-          title="Cards"
-          action={
-            <AppButton variant="tertiary" size="sm" onPress={toggleTheme}>
-              Toggle theme
-            </AppButton>
-          }
-        >
-          <AppCard className="gap-2 p-4">
-            <AppText variant="titleMD">Default card</AppText>
-            <AppText variant="bodySM" color="muted">
-              bg-surface-raised, rounded-roundedness-md
-            </AppText>
-          </AppCard>
-
-          <AppCard elevated className="gap-2 p-4">
-            <AppText variant="titleMD">Elevated card</AppText>
-            <AppText variant="bodySM" color="muted">
-              bg-surface, slightly higher surface
-            </AppText>
-          </AppCard>
-
-          <AppCard onPress={() => {}} className="gap-2 p-4">
-            <View className="flex-row items-center gap-2">
-              <AppIcon Icon={IconMapPin} size="md" color="accent" />
-              <AppText variant="titleMD">Pressable card</AppText>
-            </View>
-            <AppText variant="bodySM" color="muted">
-              Tap me — opacity feedback
-            </AppText>
-          </AppCard>
+        <AppSection title="Empty">
+          <EmptyState
+            title="No places found"
+            message="Try adjusting your filters or search in a different area."
+            action={{ label: 'Clear filters', onPress: () => {} }}
+          />
         </AppSection>
       </View>
     </AppScreen>

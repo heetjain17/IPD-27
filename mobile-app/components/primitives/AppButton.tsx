@@ -62,12 +62,12 @@ export function AppButton({
     <Pressable
       onPress={onPress}
       disabled={isInert}
-      style={({ pressed }) => ({ opacity: pressed && !isInert ? 0.75 : isInert ? 0.5 : 1 })}
       className={`
         ${containerVariantClass[variant]}
         ${sizeClass[size]}
         ${fullWidth ? 'w-full' : 'self-start'}
         flex-row items-center justify-center gap-2
+        active:opacity-75 disabled:opacity-50
         ${className}
       `}
     >

@@ -14,11 +14,7 @@ export function AppCard({ onPress, children, elevated = false, className = '' }:
 
   if (onPress) {
     return (
-      <Pressable
-        onPress={onPress}
-        style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
-        className={base}
-      >
+      <Pressable onPress={onPress} className={`${base} active:opacity-75`}>
         {children}
       </Pressable>
     );
