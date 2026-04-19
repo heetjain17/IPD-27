@@ -20,8 +20,12 @@ export default function HomeScreen() {
           <Pressable
             onPress={toggleTheme}
             className="items-center rounded-roundedness-xl py-3"
-            style={{ backgroundColor: palette.primary }}>
-            <Text className="font-body text-body-lg font-semibold" style={{ color: palette.onPrimary }}>
+            style={{ backgroundColor: palette.primary }}
+          >
+            <Text
+              className="font-body text-body-lg font-semibold"
+              style={{ color: palette.onPrimary }}
+            >
               Toggle Theme
             </Text>
           </Pressable>
