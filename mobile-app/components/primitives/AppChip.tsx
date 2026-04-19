@@ -40,7 +40,7 @@ export function AppChip({
         color={active ? 'default' : 'muted'}
         style={active ? { color: palette.background } : undefined}
       >
-        {label}
+        {label.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
       </AppText>
     </Pressable>
   );

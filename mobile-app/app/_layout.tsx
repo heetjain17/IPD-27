@@ -4,6 +4,7 @@ import {
   type Theme as NavigationTheme,
   ThemeProvider as NavThemeProvider,
 } from '@react-navigation/native';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -103,7 +104,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <RootLayoutInner />
+          <BottomSheetModalProvider>
+            <RootLayoutInner />
+          </BottomSheetModalProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

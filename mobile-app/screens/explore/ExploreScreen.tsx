@@ -1,14 +1,16 @@
 import { FlashList } from '@shopify/flash-list';
-import { IconMapPin, IconMapPinOff, IconX } from '@tabler/icons-react-native';
+import { IconAdjustments, IconMapPin, IconMapPinOff, IconX } from '@tabler/icons-react-native';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Linking, Pressable, View } from 'react-native';
 
 import { Colors } from '@/constants/colors';
 import { useAppTheme } from '@/context/ThemeContext';
 
 import { FilterChipGroup } from '@/components/composed/FilterChipGroup';
+import { FiltersSheet, type FiltersValue } from '@/components/composed/FiltersSheet';
 import { PlaceCard } from '@/components/composed/PlaceCard';
 import { SearchBar } from '@/components/composed/SearchBar';
 import { AppText } from '@/components/primitives/AppText';
@@ -25,12 +27,21 @@ export function ExploreScreen() {
   const { colorScheme } = useAppTheme();
   const palette = Colors[colorScheme];
 
+  const filtersSheetRef = useRef<BottomSheetModal>(null);
+
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locationDenied, setLocationDenied] = useState(false);
   const [locationBannerDismissed, setLocationBannerDismissed] = useState(false);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [category, setCategory] = useState<string | null>(null);
+  const [filters_value, setFiltersValue] = useState<FiltersValue>({
+    sort: 'priority',
+    category: null,
+    area: null,
+  });
+
+  const category = filters_value.category;
+  const area = filters_value.area;
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 400);
@@ -56,6 +67,9 @@ export function ExploreScreen() {
     void getLocation();
   }, []);
 
+  const effectiveSort: PlacesSortKey =
+    filters_value.sort === 'distance' && !coords ? 'priority' : filters_value.sort;
+
   const {
     data,
     isPending,
@@ -69,7 +83,8 @@ export function ExploreScreen() {
   } = usePlaces({
     q: debouncedSearch || undefined,
     category: category ?? undefined,
-    sort: (coords ? 'distance' : 'priority') as PlacesSortKey,
+    area: area ?? undefined,
+    sort: effectiveSort,
     lat: coords?.lat,
     lng: coords?.lng,
     radius: coords ? 25000 : undefined,
@@ -105,14 +120,36 @@ export function ExploreScreen() {
     </Pressable>
   );
 
+  const hasActiveFilters =
+    filters_value.category !== null ||
+    filters_value.area !== null ||
+    filters_value.sort !== 'priority';
+
   const ListHeader = (
     <View className="gap-3 pb-2 pt-4">
-      <View className="px-4">
-        <SearchBar value={search} onChangeText={setSearch} />
+      <View className="flex-row items-center gap-2 px-4">
+        <View className="flex-1">
+          <SearchBar value={search} onChangeText={setSearch} />
+        </View>
+        <Pressable
+          onPress={() => filtersSheetRef.current?.present()}
+          className="h-11 w-11 items-center justify-center rounded-roundedness-full active:opacity-70"
+          style={{
+            backgroundColor: hasActiveFilters ? palette.primary : palette.surfaceRaised,
+            borderWidth: 1.5,
+            borderColor: hasActiveFilters ? palette.primary : palette.outline,
+          }}
+        >
+          <IconAdjustments size={18} color={hasActiveFilters ? '#fff' : palette.onSurfaceMuted} />
+        </Pressable>
       </View>
       {LocationBanner}
       {(filters?.categories?.length ?? 0) > 0 && (
-        <FilterChipGroup options={filters!.categories} selected={category} onSelect={setCategory} />
+        <FilterChipGroup
+          options={filters!.categories}
+          selected={category}
+          onSelect={(v) => setFiltersValue((s) => ({ ...s, category: v }))}
+        />
       )}
     </View>
   );
@@ -161,6 +198,7 @@ export function ExploreScreen() {
         onRefresh={() => void refetch()}
         showsVerticalScrollIndicator={false}
       />
+      <FiltersSheet ref={filtersSheetRef} value={filters_value} onApply={setFiltersValue} />
     </AppScreen>
   );
 }
