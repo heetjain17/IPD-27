@@ -6,13 +6,28 @@ import {
 } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { vars } from 'nativewind';
 import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import '../global.css';
 
-import { Colors } from '@/constants/colors';
+import { Colors, type ColorScheme } from '@/constants/colors';
 import { ThemeProvider, useAppTheme } from '@/context/ThemeContext';
+
+function buildVars(scheme: ColorScheme) {
+  const palette = Colors[scheme];
+  const entries = (Object.entries(palette) as [string, string][]).map(([key, value]) => {
+    const varName = `--${key.replace(/([A-Z])/g, '-$1').toLowerCase()}` as `--${string}`;
+    return [varName, value] as const;
+  });
+  return vars(Object.fromEntries(entries) as Record<`--${string}`, string>);
+}
+
+const themeVars: Record<ColorScheme, ReturnType<typeof vars>> = {
+  dark: buildVars('dark'),
+  light: buildVars('light'),
+};
 
 /**
  * Inner layout — reads theme from context and applies the `dark` class to the
@@ -38,7 +53,7 @@ function RootLayoutInner() {
   return (
     <NavThemeProvider value={navigationTheme}>
       {/* This View's className controls NativeWind dark-mode for the whole tree */}
-      <View className={`flex-1 ${isDark ? 'dark' : ''}`}>
+      <View className={`flex-1 ${isDark ? 'dark' : ''}`} style={themeVars[colorScheme]}>
         <Stack screenOptions={{ headerShown: false }} />
         <StatusBar style={isDark ? 'light' : 'dark'} />
       </View>
