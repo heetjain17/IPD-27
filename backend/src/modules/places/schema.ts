@@ -247,6 +247,7 @@ export const placeDetailSchema = z.object({
       type: z.string().nullable(),
     }),
   ),
+  isSaved: z.boolean(),
 });
 
 export type PlacesListQuery = z.infer<typeof placesListQuerySchema>;

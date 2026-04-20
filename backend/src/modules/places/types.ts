@@ -26,6 +26,7 @@ export interface PlaceListItem {
   tags?: string[];
   thumbnail?: string | null;
   media?: { url: string; type: string | null }[];
+  isSaved?: boolean;
 }
 
 export interface PlaceSummary {
@@ -51,6 +52,7 @@ export interface PlaceSummary {
   distance: number; // metres, computed by Location module
   tags: string[];
   thumbnail: string | null; // first image URL, null if no media
+  isSaved: boolean;
 }
 
 export interface SavedPlaceSummary {
@@ -75,6 +77,7 @@ export interface SavedPlaceSummary {
   notes: string | null;
   tags: string[];
   thumbnail: string | null;
+  isSaved: boolean;
 }
 
 export interface PlaceDetail {
@@ -102,6 +105,7 @@ export interface PlaceDetail {
   reviewCount: number;
   tags: string[];
   media: { url: string; type: string | null }[];
+  isSaved: boolean;
 }
 
 export interface NearbyResponse {

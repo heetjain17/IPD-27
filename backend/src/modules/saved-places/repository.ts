@@ -1,5 +1,5 @@
 import { db } from '../../db/client.js';
-import { savedPlaces } from '../../db/schema.js';
+import { savedPlaces, users } from '../../db/schema.js';
 import { and, desc, eq, lt, or } from 'drizzle-orm';
 
 export async function savePlace(userId: string, placeId: string): Promise<void> {
@@ -53,4 +53,14 @@ export async function getSavedPlaceRows(
     .where(whereClause)
     .orderBy(desc(savedPlaces.createdAt), desc(savedPlaces.placeId))
     .limit(limit + 1);
+}
+
+export async function getSavedPlaceIdsByAuthId(authId: string): Promise<Set<string>> {
+  const rows = await db
+    .select({ placeId: savedPlaces.placeId })
+    .from(savedPlaces)
+    .innerJoin(users, eq(savedPlaces.userId, users.id))
+    .where(eq(users.authId, authId));
+
+  return new Set(rows.map((r) => r.placeId));
 }

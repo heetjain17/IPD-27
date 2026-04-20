@@ -1,5 +1,6 @@
 import * as locationService from '../location/service.js';
 import * as placesRepo from './repository.js';
+import * as savedPlacesRepo from '../saved-places/repository.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { placeDetailSchema } from './schema.js';
 import type { NearbyQuery, PlaceMediaQuery, PlacesListQuery } from './schema.js';
@@ -108,6 +109,7 @@ function toPlaceListItem(
   fields: PlacesListQuery['fields'],
   include: PlacesListQuery['include'],
   distance: number | null,
+  savedIds: Set<string>,
 ): PlaceListItem {
   const baseItem: PlaceListItem = {
     id: place.id,
@@ -127,6 +129,7 @@ function toPlaceListItem(
     area: place.area ?? null,
     thumbnail: place.media[0]?.url ?? null,
     tags: place.tags,
+    isSaved: savedIds.has(place.id),
     ...(distance !== null ? { distance: Math.round(distance) } : {}),
   };
 
@@ -154,7 +157,10 @@ function toPlaceListItem(
   };
 }
 
-export async function listPlaces(query: PlacesListQuery): Promise<PlacesListResponse> {
+export async function listPlaces(
+  query: PlacesListQuery,
+  authId?: string,
+): Promise<PlacesListResponse> {
   const cursorPayload = query.cursor ? parsePlacesCursor(query.cursor) : null;
   const validTags = await placesRepo.getExistingTagNames(query.tags);
 
@@ -197,6 +203,9 @@ export async function listPlaces(query: PlacesListQuery): Promise<PlacesListResp
 
   const placeMap = new Map(placesData.map((place) => [place.id, place]));
   const distanceMap = new Map(page.map((row) => [row.placeId, row.distanceMetres]));
+  const savedIds = authId
+    ? await savedPlacesRepo.getSavedPlaceIdsByAuthId(authId)
+    : new Set<string>();
 
   const places: PlaceListItem[] = [];
   for (const id of ids) {
@@ -204,7 +213,7 @@ export async function listPlaces(query: PlacesListQuery): Promise<PlacesListResp
     if (!place) continue;
 
     const distance = distanceMap.get(id) ?? null;
-    places.push(toPlaceListItem(place, query.fields, query.include, distance));
+    places.push(toPlaceListItem(place, query.fields, query.include, distance, savedIds));
   }
 
   let nextCursor: string | null = null;
@@ -240,7 +249,7 @@ export async function getPlaceFilters(): Promise<PlaceFiltersResponse> {
  *  2. Ask PlacesRepository to enrich those IDs with name/tags/media
  *  3. Merge, preserve distance order, build cursor
  */
-export async function findNearby(query: NearbyQuery): Promise<NearbyResponse> {
+export async function findNearby(query: NearbyQuery, authId?: string): Promise<NearbyResponse> {
   const { lat, lng, radius, limit, cursor } = query;
 
   // Step 1: geo query (delegates all ST_* work to Location module)
@@ -267,6 +276,9 @@ export async function findNearby(query: NearbyQuery): Promise<NearbyResponse> {
   // O(1) lookup maps
   const placeMap = new Map(placesData.map((p) => [p.id, p]));
   const distanceMap = new Map(pageResults.map((r) => [r.placeId, r.distanceMetres]));
+  const savedIds = authId
+    ? await savedPlacesRepo.getSavedPlaceIdsByAuthId(authId)
+    : new Set<string>();
 
   // Step 3: build summaries in distance order (order comes from location module)
   const summaries: PlaceSummary[] = [];
@@ -297,6 +309,7 @@ export async function findNearby(query: NearbyQuery): Promise<NearbyResponse> {
       distance: Math.round(distanceMap.get(id) ?? 0),
       tags: place.tags,
       thumbnail: place.media[0]?.url ?? null,
+      isSaved: savedIds.has(id),
     });
   }
 
@@ -312,12 +325,16 @@ export async function findNearby(query: NearbyQuery): Promise<NearbyResponse> {
   return { places: summaries, nextCursor };
 }
 
-export async function getById(id: string): Promise<PlaceDetail> {
+export async function getById(id: string, authId?: string): Promise<PlaceDetail> {
   const place = await placesRepo.getPlaceById(id);
 
   if (!place) {
     throw new ApiError(404, 'Place not found');
   }
+
+  const savedIds = authId
+    ? await savedPlacesRepo.getSavedPlaceIdsByAuthId(authId)
+    : new Set<string>();
 
   const detail: PlaceDetail = {
     id: place.id,
@@ -344,6 +361,7 @@ export async function getById(id: string): Promise<PlaceDetail> {
     reviewCount: place.reviewCount,
     tags: place.tags ?? [],
     media: (place.media ?? []).slice(0, PLACE_DETAIL_MEDIA_LIMIT),
+    isSaved: savedIds.has(id),
   };
 
   return placeDetailSchema.parse(detail);
@@ -414,6 +432,7 @@ export async function getSavedPlaceSummariesByIds(ids: string[]): Promise<SavedP
       notes: place.notes ?? null,
       tags: place.tags,
       thumbnail: place.media[0]?.url ?? null,
+      isSaved: true,
     });
   }
 

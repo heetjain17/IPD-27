@@ -3,6 +3,32 @@ import type { AuthenticatedRequest } from '../types/auth.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { ApiError } from '../utils/ApiError.js';
 
+export async function optionalAuthMiddleware(req: Request, _res: Response, next: NextFunction) {
+  try {
+    const authHeader = req.headers.authorization;
+    let token: string | undefined;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.replace('Bearer ', '');
+    } else if (req.cookies?.accessToken) {
+      token = req.cookies.accessToken;
+    }
+
+    if (token) {
+      const { data, error } = await supabaseAdmin.auth.getUser(token);
+      if (!error && data.user) {
+        (req as AuthenticatedRequest).user = {
+          authId: data.user.id,
+          email: data.user.email!,
+        };
+      }
+    }
+  } catch {
+    // Silently ignore — optional auth must never block the request
+  }
+  next();
+}
+
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   try {
     const authHeader = req.headers.authorization;

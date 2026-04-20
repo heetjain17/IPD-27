@@ -4,6 +4,7 @@ import { apiSuccess } from '../../utils/apiSuccess.js';
 import { ApiError } from '../../utils/ApiError.js';
 import * as placesService from './service.js';
 import type { NearbyQuery, PlaceIdParams, PlaceMediaQuery, PlacesListQuery } from './schema.js';
+import type { AuthenticatedRequest } from '../../types/auth.js';
 
 export const list = asyncHandler(async (req: Request, res: Response) => {
   const query = req.validated?.query as PlacesListQuery | undefined;
@@ -11,7 +12,8 @@ export const list = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(400, 'Invalid query parameters');
   }
 
-  const result = await placesService.listPlaces(query);
+  const authId = (req as AuthenticatedRequest).user?.authId;
+  const result = await placesService.listPlaces(query, authId);
   return res.json(apiSuccess(200, 'Places retrieved', result));
 });
 
@@ -32,7 +34,8 @@ export const nearby = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(400, 'Invalid query parameters');
   }
 
-  const result = await placesService.findNearby(query);
+  const authId = (req as AuthenticatedRequest).user?.authId;
+  const result = await placesService.findNearby(query, authId);
   return res.json(apiSuccess(200, 'Nearby places retrieved', result));
 });
 
@@ -42,7 +45,8 @@ export const getById = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(400, 'Invalid route parameters');
   }
 
-  const place = await placesService.getById(params.id);
+  const authId = (req as AuthenticatedRequest).user?.authId;
+  const place = await placesService.getById(params.id, authId);
   return res.json(apiSuccess(200, 'Place retrieved', place));
 });
 
