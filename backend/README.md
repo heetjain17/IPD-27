@@ -1,166 +1,223 @@
-# Tourism Backend API
+# Tourism — Backend API
 
-Node.js + Express + TypeScript + Drizzle ORM backend for the tourism discovery platform.
+Node.js + Express + TypeScript REST API for the tourism discovery platform. Uses **Drizzle ORM**, **PostGIS**, and **Supabase Auth**.
 
-## Project Structure
+## Tech Stack
 
-```
-src/
-├── config/           # Configuration files
-├── db/              # Database client and schema
-│   ├── client.ts    # Drizzle database connection
-│   ├── schema.ts    # Database schema definitions
-│   └── index.ts     # Exports
-├── middleware/      # Global middleware
-│   ├── error.middleware.ts       # Error handling
-│   ├── validation.middleware.ts  # Request validation
-│   └── index.ts
-├── modules/         # Feature modules (auth, places, etc.)
-├── shared/          # Shared utilities across modules
-├── types/           # TypeScript type definitions
-│   └── express.d.ts # Express type extensions
-├── utils/           # Utility functions
-│   ├── ApiError.ts      # Custom error class
-│   ├── apiSuccess.ts    # Success response helper
-│   ├── asyncHandler.ts  # Async route wrapper
-│   ├── getEnv.ts        # Environment variable helper
-│   └── index.ts
-└── index.ts         # Application entry point
+| Layer      | Library                             |
+| ---------- | ----------------------------------- |
+| Runtime    | Node.js (ESM)                       |
+| Framework  | Express                             |
+| Language   | TypeScript (nodenext)               |
+| ORM        | Drizzle ORM                         |
+| Database   | PostgreSQL + PostGIS (via Supabase) |
+| Auth       | Supabase Auth (JWT)                 |
+| Validation | Zod                                 |
+| API Docs   | OpenAPI / Swagger                   |
+
+## Setup
+
+```bash
+npm install
 ```
 
-## Environment Variables
-
-Create a `.env` file in the backend directory:
+Create a `.env` file:
 
 ```env
-# Server
 PORT=3000
 NODE_ENV=development
-
-# Database
 DATABASE_URL=postgresql://user:password@host:port/database
-
-# Frontend
-FRONTEND_URL=http://localhost:3000
-
-# JWT (for future auth module)
-JWT_SECRET=your-secret-key
-JWT_EXPIRES_IN=7d
+SUPABASE_URL=https://<project>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
+JWT_SECRET=<supabase-jwt-secret>
+FRONTEND_URL=http://localhost:8081
 ```
 
 ## Available Scripts
 
 ```bash
-# Development
-npm run dev              # Start dev server with hot reload
-
-# Build & Production
+npm run dev              # Start dev server with hot reload (tsx watch)
 npm run build            # Compile TypeScript
 npm run start            # Run production build
 
-# Database
-npm run db:generate      # Generate migration from schema
-npm run db:migrate       # Apply migrations
+npm run db:generate      # Generate Drizzle migration from schema changes
+npm run db:migrate       # Apply pending migrations
 npm run db:push          # Push schema directly (dev only)
 npm run db:studio        # Open Drizzle Studio GUI
 
-# Code Quality
-npm run lint             # Check for linting errors
-npm run lint:fix         # Auto-fix linting errors
-npm run format           # Format all files with Prettier
-npm run format:check     # Check if files are formatted
-npm run code:check       # Run both format check and lint
-npm run code:fix         # Run both format and lint fix
+npm run lint             # ESLint check
+npm run lint:fix         # ESLint auto-fix
+npm run format           # Prettier format
+npm run code:fix         # format + lint:fix together
 ```
 
-## Usage Examples
+## Project Structure
 
-### Using Utilities
-
-```typescript
-import { ApiError, apiSuccess, asyncHandler, getEnv } from './utils/index.js';
-
-// Custom error
-throw new ApiError(404, 'Resource not found');
-
-// Success response
-return res.json(apiSuccess(200, 'Success', { data: user }));
-
-// Async route handler
-router.get(
-  '/users',
-  asyncHandler(async (req, res) => {
-    const users = await db.select().from(users);
-    res.json(apiSuccess(200, 'Users fetched', users));
-  }),
-);
-
-// Environment variable
-const jwtSecret = getEnv('JWT_SECRET');
+```
+src/
+├── db/
+│   ├── client.ts           # Drizzle + postgres-js connection
+│   ├── schema.ts           # All table definitions
+│   └── index.ts
+├── lib/
+│   └── supabase.ts         # Supabase public + admin clients
+├── middleware/
+│   ├── auth.middleware.ts       # JWT verification (header or cookie)
+│   ├── validate.middleware.ts   # Zod schema validation
+│   └── error.middleware.ts      # Global error handler
+├── modules/
+│   ├── auth/               # Register, login, logout, me, refresh
+│   ├── places/             # Discovery, detail, filters
+│   ├── reviews/            # Create + list reviews
+│   ├── saved-places/       # Save / unsave / list saved places
+│   ├── tags/               # Tag list
+│   └── location/           # Reverse geocode helper
+├── openapi/                # OpenAPI spec generation
+├── types/
+│   └── auth.d.ts           # AuthenticatedRequest interface
+└── utils/
+    ├── ApiError.ts         # Custom error class
+    ├── apiSuccess.ts       # Success response formatter
+    ├── asyncHandler.ts     # Async route wrapper
+    └── getEnv.ts           # Type-safe env getter
 ```
 
-### Request Validation
+## API Endpoints
 
-```typescript
-import { validate } from './middleware/index.js';
-import { z } from 'zod';
+All routes are prefixed with `/api/v1`.
 
-const loginSchema = {
-  body: z.object({
-    email: z.string().email(),
-    password: z.string().min(6),
-  }),
-};
+### Auth — `/auth`
 
-router.post('/login', validate(loginSchema), async (req, res) => {
-  const { email, password } = req.validated.body;
-  // ... login logic
-});
+| Method | Path             | Auth | Description           |
+| ------ | ---------------- | ---- | --------------------- |
+| POST   | `/auth/register` | —    | Create account        |
+| POST   | `/auth/login`    | —    | Login, returns tokens |
+| POST   | `/auth/logout`   | ✅   | Invalidate session    |
+| GET    | `/auth/me`       | ✅   | Current user profile  |
+| POST   | `/auth/refresh`  | —    | Refresh access token  |
+
+### Places — `/places`
+
+| Method | Path              | Auth | Description                                             |
+| ------ | ----------------- | ---- | ------------------------------------------------------- |
+| GET    | `/places`         | ✅   | List / search / filter places (paginated)               |
+| GET    | `/places/filters` | ✅   | Filter metadata (categories, areas, tags, price ranges) |
+| GET    | `/places/:id`     | ✅   | Place detail                                            |
+
+**Query params for `GET /places`:**
+
+| Param         | Type   | Description                                                                     |
+| ------------- | ------ | ------------------------------------------------------------------------------- |
+| `q`           | string | Full-text search                                                                |
+| `category`    | string | Filter by category                                                              |
+| `area`        | string | Filter by area                                                                  |
+| `sort`        | string | `priority` \| `distance` \| `rating` \| `newest` \| `price_low` \| `price_high` |
+| `lat` / `lng` | number | User coordinates (required for `sort=distance`)                                 |
+| `radius`      | number | Search radius in metres (default varies)                                        |
+| `cursor`      | string | Pagination cursor                                                               |
+| `limit`       | number | Page size (default 20)                                                          |
+
+### Reviews — `/places/:id/reviews`
+
+| Method | Path                  | Auth | Description              |
+| ------ | --------------------- | ---- | ------------------------ |
+| GET    | `/places/:id/reviews` | ✅   | List reviews (paginated) |
+| POST   | `/places/:id/reviews` | ✅   | Submit a review          |
+
+### Saved Places — `/saved-places`
+
+| Method | Path                | Auth | Description       |
+| ------ | ------------------- | ---- | ----------------- |
+| GET    | `/saved-places`     | ✅   | List saved places |
+| POST   | `/saved-places/:id` | ✅   | Save a place      |
+| DELETE | `/saved-places/:id` | ✅   | Unsave a place    |
+
+### Tags — `/tags`
+
+| Method | Path    | Auth | Description   |
+| ------ | ------- | ---- | ------------- |
+| GET    | `/tags` | ✅   | List all tags |
+
+### Health
+
+```bash
+GET /health
+# → { "status": "ok", "db": "ok" }
 ```
 
-### Error Handling
+## Database Schema
 
-All errors are automatically caught and formatted by the error middleware:
+### Tables
+
+| Table          | Description                                        |
+| -------------- | -------------------------------------------------- |
+| `users`        | App users linked to Supabase auth (`auth_id`)      |
+| `places`       | Core place data with PostGIS geography column      |
+| `reviews`      | User reviews with star rating and optional comment |
+| `saved_places` | User ↔ place bookmarks                             |
+| `tags`         | Tag definitions                                    |
+| `place_tags`   | Many-to-many place ↔ tag join                      |
+
+### Key Patterns
+
+- **PostGIS** — `places.location` is a `geography(Point, 4326)` column; distance queries use `ST_DWithin` and `ST_Distance`.
+- **Cached aggregates** — `places.average_rating` and `places.review_count` are maintained by a Postgres trigger on the `reviews` table (no JOIN at query time).
+- **Cursor pagination** — uses an opaque base64 cursor rather than `OFFSET`.
+
+## Module Pattern
+
+Every feature module follows the same structure:
+
+```
+modules/<name>/
+├── types.ts        # Request/response interfaces
+├── schema.ts       # Zod validation schemas
+├── repository.ts   # Raw DB queries (Drizzle)
+├── service.ts      # Business logic
+├── controller.ts   # Route handlers (uses asyncHandler)
+└── routes.ts       # Express Router + middleware wiring
+```
+
+### Conventions
 
 ```typescript
-// Validation errors (Zod) → 400
-// ApiError → custom status code
-// Unknown errors → 500
+// Throw errors
+throw new ApiError(404, 'Place not found');
+
+// Return success
+return res.json(apiSuccess(200, 'Places fetched', data));
+
+// Wrap async handlers
+router.get('/places', requireAuth, asyncHandler(controller.list));
+
+// Read env
+const secret = getEnv('JWT_SECRET');
 ```
 
 ## Development Workflow
 
-1. **Start the dev server:**
+1. Start the server:
 
    ```bash
    npm run dev
    ```
 
-2. **Make schema changes in `src/db/schema.ts`**
-
-3. **Generate and apply migration:**
+2. Edit `src/db/schema.ts` for schema changes, then:
 
    ```bash
    npm run db:generate
    npm run db:migrate
    ```
 
-4. **Format and lint before committing:**
+3. Before committing:
    ```bash
    npm run code:fix
    ```
 
-## API Health Check
+## OpenAPI Docs
 
-```bash
-curl http://localhost:3000/health
+The spec is auto-generated and served at:
+
 ```
-
-Response:
-
-```json
-{
-  "status": "ok",
-  "db": "ok"
-}
+GET /api/v1/docs
 ```
