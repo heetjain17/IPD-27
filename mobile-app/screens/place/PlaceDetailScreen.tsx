@@ -19,8 +19,8 @@ import { AppChip } from '@/components/primitives/AppChip';
 import { AppScreen } from '@/components/primitives/AppScreen';
 import { AppSection } from '@/components/primitives/AppSection';
 import { AppText } from '@/components/primitives/AppText';
+import { PlaceDetailSkeleton } from '@/components/composed/PlaceDetailSkeleton';
 import { ErrorState } from '@/components/primitives/ErrorState';
-import { LoadingState } from '@/components/primitives/LoadingState';
 import { Colors } from '@/constants/colors';
 import { useAppTheme } from '@/context/ThemeContext';
 import { usePlace, usePlaceReviews } from '@/hooks/usePlaces';
@@ -71,7 +71,7 @@ export function PlaceDetailScreen() {
     return (
       <AppScreen padded={false} edges={[]}>
         {BackButton}
-        <LoadingState fullScreen label="Loading place…" />
+        <PlaceDetailSkeleton />
       </AppScreen>
     );
   }

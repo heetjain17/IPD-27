@@ -67,6 +67,7 @@ export interface Place {
   tags: string[];
   thumbnail?: string | null;
   media: PlaceMedia[];
+  isSaved: boolean;
 }
 
 export interface PlaceDetail extends Place {

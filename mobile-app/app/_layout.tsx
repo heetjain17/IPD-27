@@ -67,7 +67,7 @@ function RootLayoutInner() {
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/(auth)/login');
     } else if (isAuthenticated && !inTabGroup) {
-      router.replace('/(tabs)/explore');
+      router.replace('/(tabs)/home');
     }
   }, [isHydrated, isAuthenticated, segments, router]);
 
@@ -88,8 +88,11 @@ function RootLayoutInner() {
     <NavThemeProvider value={navigationTheme}>
       {/* This View's className controls NativeWind dark-mode for the whole tree */}
       <View className={`flex-1 ${isDark ? 'dark' : ''}`} style={themeVars[colorScheme]}>
-        <Stack screenOptions={{ headerShown: false }} />
-        <StatusBar style={isDark ? 'light' : 'dark'} />
+        {/* BottomSheetModalProvider must live INSIDE the vars View so portals inherit CSS vars */}
+        <BottomSheetModalProvider>
+          <Stack screenOptions={{ headerShown: false }} />
+          <StatusBar style={isDark ? 'light' : 'dark'} />
+        </BottomSheetModalProvider>
       </View>
     </NavThemeProvider>
   );
@@ -104,9 +107,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <BottomSheetModalProvider>
-            <RootLayoutInner />
-          </BottomSheetModalProvider>
+          <RootLayoutInner />
         </ThemeProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

@@ -40,7 +40,7 @@ export interface FiltersValue {
 }
 
 const DEFAULT_FILTERS: FiltersValue = {
-  sort: 'priority',
+  sort: 'distance',
   category: null,
   area: null,
 };
@@ -111,9 +111,9 @@ export const FiltersSheet = forwardRef<BottomSheetModal, FiltersSheetProps>(
               <AppSection title="Category">
                 <FilterChipGroup
                   wrap
-                  options={filters!.categories}
-                  selected={local.category}
-                  onSelect={(v) => setLocal((s) => ({ ...s, category: v }))}
+                  options={['All', ...filters!.categories]}
+                  selected={local.category ?? 'All'}
+                  onSelect={(v) => setLocal((s) => ({ ...s, category: v === 'All' ? null : v }))}
                 />
               </AppSection>
             )}
@@ -123,9 +123,9 @@ export const FiltersSheet = forwardRef<BottomSheetModal, FiltersSheetProps>(
               <AppSection title="Area">
                 <FilterChipGroup
                   wrap
-                  options={filters!.areas}
-                  selected={local.area}
-                  onSelect={(v) => setLocal((s) => ({ ...s, area: v }))}
+                  options={['All', ...filters!.areas]}
+                  selected={local.area ?? 'All'}
+                  onSelect={(v) => setLocal((s) => ({ ...s, area: v === 'All' ? null : v }))}
                 />
               </AppSection>
             )}

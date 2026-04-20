@@ -15,9 +15,9 @@ import { PlaceCard } from '@/components/composed/PlaceCard';
 import { SearchBar } from '@/components/composed/SearchBar';
 import { AppText } from '@/components/primitives/AppText';
 import { AppScreen } from '@/components/primitives/AppScreen';
+import { PlaceCardSkeleton } from '@/components/composed/PlaceCardSkeleton';
 import { EmptyState } from '@/components/primitives/EmptyState';
 import { ErrorState } from '@/components/primitives/ErrorState';
-import { LoadingState } from '@/components/primitives/LoadingState';
 import { useFilters, usePlaces } from '@/hooks/usePlaces';
 import type { Place, PlacesSortKey } from '@/types/api';
 
@@ -35,7 +35,7 @@ export function ExploreScreen() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filters_value, setFiltersValue] = useState<FiltersValue>({
-    sort: 'priority',
+    sort: 'distance',
     category: null,
     area: null,
   });
@@ -123,7 +123,7 @@ export function ExploreScreen() {
   const hasActiveFilters =
     filters_value.category !== null ||
     filters_value.area !== null ||
-    filters_value.sort !== 'priority';
+    filters_value.sort !== 'distance';
 
   const ListHeader = (
     <View className="gap-3 pb-2 pt-4">
@@ -146,16 +146,20 @@ export function ExploreScreen() {
       {LocationBanner}
       {(filters?.categories?.length ?? 0) > 0 && (
         <FilterChipGroup
-          options={filters!.categories}
-          selected={category}
-          onSelect={(v) => setFiltersValue((s) => ({ ...s, category: v }))}
+          options={['All', ...filters!.categories]}
+          selected={category ?? 'All'}
+          onSelect={(v) => setFiltersValue((s) => ({ ...s, category: v === 'All' ? null : v }))}
         />
       )}
     </View>
   );
 
   const ListEmpty = isPending ? (
-    <LoadingState fullScreen label="Finding places…" />
+    <View className="gap-3 px-4 pt-3">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <PlaceCardSkeleton key={i} />
+      ))}
+    </View>
   ) : isError ? (
     <ErrorState
       title="Couldn't load places"
@@ -176,7 +180,7 @@ export function ExploreScreen() {
         data={places}
         renderItem={({ item }) => (
           <View className="px-4 pb-3">
-            <PlaceCard place={item} onPress={() => router.push(`/(tabs)/explore/${item.id}`)} />
+            <PlaceCard place={item} onPress={() => router.push(`/(tabs)/place/${item.id}`)} />
           </View>
         )}
         keyExtractor={(item) => item.id}
@@ -185,8 +189,9 @@ export function ExploreScreen() {
         ListEmptyComponent={ListEmpty}
         ListFooterComponent={
           isFetchingNextPage ? (
-            <View className="py-4">
-              <LoadingState />
+            <View className="gap-3 px-4 py-3">
+              <PlaceCardSkeleton />
+              <PlaceCardSkeleton />
             </View>
           ) : null
         }

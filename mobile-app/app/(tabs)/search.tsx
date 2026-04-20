@@ -1,5 +1,5 @@
 import { ExploreScreen } from '@/screens/explore/ExploreScreen';
 
-export default function ExplorePage() {
+export default function SearchTab() {
   return <ExploreScreen />;
 }

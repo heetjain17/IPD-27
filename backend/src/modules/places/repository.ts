@@ -1,5 +1,5 @@
 import { db } from '../../db/client.js';
-import { places, placeTags, tags, placeMedia } from '../../db/schema.js';
+import { places, placeTags, tags, placeMedia, reviews } from '../../db/schema.js';
 import { inArray, eq, asc, sql } from 'drizzle-orm';
 import type { PlaceEnrichmentOptions, PlaceListPageRow, PlaceWithEnrichment } from './types.js';
 
@@ -292,8 +292,14 @@ export async function getPlacesByIds(
       avgCostForTwo: places.avgCostForTwo,
       crowdLevelOverride: places.crowdLevelOverride,
       notes: places.notes,
-      averageRating: places.averageRating,
-      reviewCount: places.reviewCount,
+      averageRating: sql<number>`
+        COALESCE(
+          (SELECT ROUND(AVG(r.rating)::numeric, 2)
+           FROM ${reviews} r WHERE r.place_id = ${places.id}),
+        0)::float8`,
+      reviewCount: sql<number>`
+        (SELECT COUNT(*)
+         FROM ${reviews} r WHERE r.place_id = ${places.id})::int`,
     })
     .from(places)
     .where(inArray(places.id, ids));

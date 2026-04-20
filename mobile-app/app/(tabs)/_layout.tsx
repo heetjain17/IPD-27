@@ -1,4 +1,4 @@
-import { IconBookmark, IconCompass, IconUser } from '@tabler/icons-react-native';
+import { IconBookmark, IconHome, IconSearch, IconUser } from '@tabler/icons-react-native';
 import { Tabs } from 'expo-router';
 
 import { Colors } from '@/constants/colors';
@@ -23,10 +23,17 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="explore"
+        name="home"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color, size }) => <IconCompass size={size} color={color} />,
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => <IconHome size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="search"
+        options={{
+          title: 'Search',
+          tabBarIcon: ({ color, size }) => <IconSearch size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -43,7 +50,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <IconUser size={size} color={color} />,
         }}
       />
-      <Tabs.Screen name="explore/[id]" options={{ href: null }} />
+      <Tabs.Screen name="place/[id]" options={{ href: null }} />
     </Tabs>
   );
 }
