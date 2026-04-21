@@ -8,7 +8,7 @@ import {
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Linking, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MediaStrip } from '@/components/composed/MediaStrip';
@@ -180,6 +180,22 @@ export function PlaceDetailScreen() {
             )}
           </View>
         </AppSection>
+
+        {/* Navigate */}
+        <View className="mt-6 px-4">
+          <AppButton
+            variant="primary"
+            fullWidth
+            leftIcon={<IconMapPin size={18} color={palette.background} />}
+            onPress={() =>
+              Linking.openURL(
+                `https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}`
+              )
+            }
+          >
+            Navigate
+          </AppButton>
+        </View>
 
         {/* Photos */}
         {place.media.length > 0 && (

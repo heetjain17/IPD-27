@@ -3,7 +3,7 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { IconCurrentLocation } from '@tabler/icons-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 import Animated, { useAnimatedStyle, useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -81,13 +81,41 @@ export function HomeScreen() {
         setSearchCoords(mock);
         return;
       }
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-      const loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      const c = { lat: loc.coords.latitude, lng: loc.coords.longitude };
-      setSearchCoords(c);
+      try {
+        const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
+        
+        if (status !== 'granted') {
+          if (!canAskAgain) {
+            Alert.alert(
+              'Location Access Denied',
+              'Please enable location permissions in your device settings to see places near you.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Open Settings', onPress: () => Linking.openSettings() },
+              ]
+            );
+          }
+          return;
+        }
+
+        const providerStatus = await Location.getProviderStatusAsync();
+        if (!providerStatus.locationServicesEnabled) {
+          Alert.alert(
+            'Location Disabled',
+            'Please turn on your device GPS to find places nearby.',
+            [{ text: 'OK', style: 'cancel' }]
+          );
+          return;
+        }
+
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        const c = { lat: loc.coords.latitude, lng: loc.coords.longitude };
+        setSearchCoords(c);
+      } catch (e) {
+        console.warn('Location access failed:', e);
+      }
     }
     void getLocation();
   }, []);
