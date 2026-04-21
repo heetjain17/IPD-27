@@ -1,13 +1,5 @@
-import { AppScreen } from '@/components/primitives/AppScreen';
-import { AppText } from '@/components/primitives/AppText';
+import { ProfileScreen } from '@/screens/profile/ProfileScreen';
 
 export default function ProfilePage() {
-  return (
-    <AppScreen padded>
-      <AppText variant="titleLG">Profile</AppText>
-      <AppText variant="bodySM" color="muted">
-        ProfileScreen coming soon
-      </AppText>
-    </AppScreen>
-  );
+  return <ProfileScreen />;
 }
