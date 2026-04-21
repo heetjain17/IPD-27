@@ -430,8 +430,11 @@ export async function getSavedPlaceSummariesByIds(ids: string[]): Promise<SavedP
       avgCostForTwo: place.avgCostForTwo ?? null,
       crowdLevelOverride: place.crowdLevelOverride ?? null,
       notes: place.notes ?? null,
+      averageRating: place.averageRating,
+      reviewCount: place.reviewCount,
       tags: place.tags,
       thumbnail: place.media[0]?.url ?? null,
+      media: place.media,
       isSaved: true,
     });
   }

@@ -1,13 +1,5 @@
-import { AppScreen } from '@/components/primitives/AppScreen';
-import { AppText } from '@/components/primitives/AppText';
+import { SavedScreen } from '@/screens/saved/SavedScreen';
 
 export default function SavedPage() {
-  return (
-    <AppScreen padded>
-      <AppText variant="titleLG">Saved</AppText>
-      <AppText variant="bodySM" color="muted">
-        SavedScreen coming soon
-      </AppText>
-    </AppScreen>
-  );
+  return <SavedScreen />;
 }

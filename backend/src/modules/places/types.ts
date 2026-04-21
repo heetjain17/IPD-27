@@ -75,8 +75,11 @@ export interface SavedPlaceSummary {
   avgCostForTwo: number | null;
   crowdLevelOverride: string | null;
   notes: string | null;
+  averageRating: number;
+  reviewCount: number;
   tags: string[];
   thumbnail: string | null;
+  media: { url: string; type: string | null }[];
   isSaved: boolean;
 }
 

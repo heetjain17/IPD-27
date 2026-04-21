@@ -7,6 +7,7 @@ import type {
   PlacesParams,
   PlacesResponse,
   ReviewsResponse,
+  SavedPlacesResponse,
 } from '@/types/api';
 
 import { apiClient } from './api';
@@ -51,5 +52,29 @@ export async function getPlaceMedia(
 
 export async function getFilters(): Promise<FilterMeta> {
   const { data } = await apiClient.get<ApiSuccess<FilterMeta>>('/api/v1/places/filters');
+  return data.data;
+}
+
+export async function getSavedPlaces(params?: {
+  limit?: number;
+  cursor?: string;
+}): Promise<SavedPlacesResponse> {
+  const { data } = await apiClient.get<ApiSuccess<SavedPlacesResponse>>('/api/v1/places/saved', {
+    params,
+  });
+  return data.data;
+}
+
+export async function savePlace(placeId: string): Promise<{ saved: true }> {
+  const { data } = await apiClient.post<ApiSuccess<{ saved: true }>>('/api/v1/places/save', {
+    placeId,
+  });
+  return data.data;
+}
+
+export async function unsavePlace(placeId: string): Promise<{ saved: false }> {
+  const { data } = await apiClient.delete<ApiSuccess<{ saved: false }>>(
+    `/api/v1/places/save/${placeId}`,
+  );
   return data.data;
 }

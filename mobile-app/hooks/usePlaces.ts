@@ -1,7 +1,8 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { InfiniteData } from '@tanstack/react-query';
 
 import * as placesService from '@/services/places';
-import type { PlacesParams } from '@/types/api';
+import type { PlacesParams, SavedPlacesResponse } from '@/types/api';
 
 export function usePlaces(params?: Omit<PlacesParams, 'cursor'>) {
   return useInfiniteQuery({
@@ -45,5 +46,54 @@ export function useFilters() {
     queryKey: ['filters'] as const,
     queryFn: () => placesService.getFilters(),
     staleTime: Infinity,
+  });
+}
+
+export function useSavedPlaces() {
+  return useInfiniteQuery({
+    queryKey: ['savedPlaces'] as const,
+    queryFn: ({ pageParam }) => placesService.getSavedPlaces({ cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+  });
+}
+
+export function useSavePlace() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (placeId: string) => placesService.savePlace(placeId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['savedPlaces'] });
+    },
+  });
+}
+
+export function useUnsavePlace() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (placeId: string) => placesService.unsavePlace(placeId),
+    onMutate: async (placeId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['savedPlaces'] });
+      const snapshot = queryClient.getQueryData<InfiniteData<SavedPlacesResponse>>(['savedPlaces']);
+      queryClient.setQueryData<InfiniteData<SavedPlacesResponse>>(['savedPlaces'], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            places: page.places.filter((p) => p.id !== placeId),
+          })),
+        };
+      });
+      return { snapshot };
+    },
+    onError: (_err, _placeId, context) => {
+      if (context?.snapshot) {
+        queryClient.setQueryData(['savedPlaces'], context.snapshot);
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ['savedPlaces'] });
+    },
   });
 }
