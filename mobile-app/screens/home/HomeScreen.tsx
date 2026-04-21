@@ -3,15 +3,16 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { IconCurrentLocation } from '@tabler/icons-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
+import Animated, { useAnimatedStyle, useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FilterChipGroup } from '@/components/composed/FilterChipGroup';
 import { PlaceCard } from '@/components/composed/PlaceCard';
 import { PlaceCardSkeleton } from '@/components/composed/PlaceCardSkeleton';
 import { AppText } from '@/components/primitives/AppText';
-import { Colors } from '@/constants/colors';
+import { Colors, type AppColors } from '@/constants/colors';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useFilters, usePlaces } from '@/hooks/usePlaces';
 import type { Place } from '@/types/api';
@@ -48,15 +49,16 @@ const INITIAL_REGION: Region = {
 
 const SEARCH_THRESHOLD = 0.012;
 
+
 export function HomeScreen() {
   const router = useRouter();
   const { colorScheme } = useAppTheme();
   const palette = Colors[colorScheme];
   const { top } = useSafeAreaInsets();
-  const { height: screenHeight } = useWindowDimensions();
 
   const sheetRef = useRef<BottomSheet>(null);
   const mapRef = useRef<MapView>(null);
+  const sheetAnimatedPosition = useSharedValue(0);
   const locatedOnce = useRef(false);
 
   const [searchCoords, setSearchCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -66,10 +68,16 @@ export function HomeScreen() {
 
   const snapPoints = useMemo(() => ['38%', '72%'], []);
 
+  const locateBtnAnimStyle = useAnimatedStyle(() => ({
+    // animatedPosition.value = Y from top of screen where sheet handle sits.
+    // Position button 12px above the handle (handle ~28px tall, so -40px from sheet Y).
+    top: sheetAnimatedPosition.value - 56,
+  }));
+
   useEffect(() => {
     async function getLocation() {
       if (process.env.EXPO_PUBLIC_MOCK_LOCATION === 'true') {
-        const mock = { lat: 19.076, lng: 72.8777 };
+        const mock = { lat: 19.1061292, lng: 72.8257094 };
         setSearchCoords(mock);
         return;
       }
@@ -176,6 +184,7 @@ export function HomeScreen() {
         onRegionChangeComplete={setVisibleRegion}
         customMapStyle={colorScheme === 'dark' ? MAP_DARK_STYLE : []}
       >
+        {/* Place markers */}
         {places.map((place) => (
           <Marker
             key={place.id}
@@ -184,6 +193,15 @@ export function HomeScreen() {
             onPress={() => handleMarkerPress(place)}
           />
         ))}
+        {/* User location — red pin */}
+        {searchCoords && (
+          <Marker
+            coordinate={{ latitude: searchCoords.lat, longitude: searchCoords.lng }}
+            pinColor="red"
+            anchor={{ x: 0.5, y: 1 }}
+            zIndex={999}
+          />
+        )}
       </MapView>
 
       {/* Category chips overlay */}
@@ -199,15 +217,11 @@ export function HomeScreen() {
 
       {/* Locate-me button */}
       {searchCoords && (
-        <Pressable
-          onPress={handleLocateMe}
-          style={[
-            styles.locateBtn,
-            { bottom: screenHeight * 0.42, backgroundColor: palette.surface },
-          ]}
-        >
-          <IconCurrentLocation size={20} color={palette.primary} />
-        </Pressable>
+        <Animated.View style={[styles.locateBtn, { backgroundColor: palette.surface }, locateBtnAnimStyle]}>
+          <Pressable onPress={handleLocateMe} style={styles.locateBtnPressable}>
+            <IconCurrentLocation size={20} color={palette.primary} />
+          </Pressable>
+        </Animated.View>
       )}
 
       {/* Search this area button */}
@@ -231,6 +245,7 @@ export function HomeScreen() {
         snapPoints={snapPoints}
         index={0}
         enableDynamicSizing={false}
+        animatedPosition={sheetAnimatedPosition}
         backgroundStyle={{ backgroundColor: palette.surface }}
         handleIndicatorStyle={{ backgroundColor: palette.onSurfaceMuted, width: 40 }}
       >
@@ -296,6 +311,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   listContent: {
+    flexGrow: 1,
     paddingHorizontal: 16,
     paddingTop: 4,
     paddingBottom: 32,
@@ -329,5 +345,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
+    zIndex: 10,
+  },
+  locateBtnPressable: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
   },
 });

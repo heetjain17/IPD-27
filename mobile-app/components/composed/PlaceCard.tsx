@@ -32,7 +32,7 @@ export function PlaceCard({ place, onPress }: PlaceCardProps) {
     <AppCard onPress={onPress}>
       <View className="flex-row gap-3 p-2">
         {/* Thumbnail */}
-        <View className="w-24 self-stretch overflow-hidden rounded-[1.115rem] bg-surface-subtle">
+        <View className="h-28 w-24 overflow-hidden rounded-[1.115rem] bg-surface-subtle">
           {thumbnail ? (
             <Image
               source={{ uri: thumbnail }}

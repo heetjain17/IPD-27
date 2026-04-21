@@ -1,4 +1,4 @@
-import { IconBookmarks, IconLogout } from '@tabler/icons-react-native';
+import { IconBookmarks, IconLogout, IconMoon, IconSun } from '@tabler/icons-react-native';
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { Alert, View } from 'react-native';
@@ -47,7 +47,7 @@ function StatCard({ label, value }: StatCardProps) {
 
 export function ProfileScreen() {
   const router = useRouter();
-  const { colorScheme } = useAppTheme();
+  const { colorScheme, toggleTheme } = useAppTheme();
   const palette = Colors[colorScheme];
 
   const user = useAuthStore((s) => s.user);
@@ -132,6 +132,22 @@ export function ProfileScreen() {
           onPress={() => router.push('/(tabs)/saved' as never)}
         >
           View saved places
+        </AppButton>
+
+        {/* Theme Toggle */}
+        <AppButton
+          variant="secondary"
+          fullWidth
+          leftIcon={
+            colorScheme === 'dark' ? (
+              <IconSun size={18} color={palette.onSurface} />
+            ) : (
+              <IconMoon size={18} color={palette.onSurface} />
+            )
+          }
+          onPress={toggleTheme}
+        >
+          {colorScheme === 'dark' ? 'Light mode' : 'Dark mode'}
         </AppButton>
 
         {/* Logout */}
